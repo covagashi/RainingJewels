@@ -1,15 +1,25 @@
-import 'package:device_preview/device_preview.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:rainingjewels_new/kConstant.dart';
 import 'package:rainingjewels_new/screens/homepage.dart';
+import 'package:audio_service/audio_service.dart';
+import 'package:rainingjewels_new/services/audio_service.dart';
 
-void main() => runApp(
-      DevicePreview(
-        enabled: false, //!kReleaseMode,
-        builder: (context) => MyApp(),
-      ),
-    );
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize audio service
+  await AudioService.init(
+    builder: () => AudioPlayerHandler(),
+    config: AudioServiceConfig(
+      androidNotificationChannelId: 'com.covaga.jewelrain.channel.audio',
+      androidNotificationChannelName: 'Jewel Rain Audio',
+      androidNotificationOngoing: true,
+      androidShowNotificationBadge: false,
+    ),
+  );
+
+  runApp(MyApp());
+}
 
 class MyApp extends StatelessWidget {
   final _navigatorKey = GlobalKey<NavigatorState>();
@@ -19,9 +29,7 @@ class MyApp extends StatelessWidget {
     var routeName;
     return MaterialApp(
         navigatorKey: _navigatorKey,
-        locale: DevicePreview.locale(context), // <--- Add the locale
-        builder: DevicePreview.appBuilder, // <--- Add the builder
-        title: 'Relaxing Rain',
+        title: 'Jewel Rain',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           primarySwatch: Colors.blue,
@@ -47,7 +55,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       body: Container(
         padding: EdgeInsets.all(20),
-        color: kBlueBackground,
+        color: Colors.grey.shade800,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -82,11 +90,6 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             InkWell(
               onTap: () {
-                for(int i = 0; i < 3; i++) {
-                  kSentences.shuffle();
-                  finalSentences.add(kSentences.first);
-                  kSentences.removeAt(0);
-                }
                 Navigator.of(context).pushNamed(Homepage.routeName);
               },
               child: Container(
