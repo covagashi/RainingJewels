@@ -9,11 +9,15 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  
-  # Tus dependencias
+
+  # Dependencias de la app
   audioplayers: ^6.0.0
-  device_preview: ^1.1.0
   flutter_launcher_icons: ^0.13.1
+  wakelock_plus: ^1.2.8
+  screen_brightness: ^1.0.1
+  url_launcher: ^6.2.5
+  audio_service: ^0.18.15
+  just_audio: ^0.9.40
   
 
   cupertino_icons: ^1.0.6
@@ -36,3 +40,11 @@ flutter:
     - assets/rain.mp3
     - assets/thunder.mp3
     - assets/wind.mp3
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/icon.png"
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/icon.png"
+  min_sdk_android: 21

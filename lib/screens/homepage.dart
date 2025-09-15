@@ -1,10 +1,13 @@
 import 'dart:math';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:rainingjewels_new/widgets/content_cards.dart';
+import 'package:rainingjewels_new/widgets/working_audio_player.dart';
 import 'package:rainingjewels_new/kConstant.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
+import 'package:screen_brightness/screen_brightness.dart';
 
 class Homepage extends StatefulWidget {
   static const routeName = "/homepage";
@@ -18,11 +21,16 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
   late final Ticker _ticker;
   static AudioPlayer fixedPlayer = AudioPlayer();
   bool playState = false;
+  bool _isDimmed = false;
+  Timer? _dimTimer;
+  double _originalBrightness = 1.0;
 
   @override
   void dispose() {
     _ticker.dispose();
     fixedPlayer.dispose();
+    _dimTimer?.cancel();
+    WakelockPlus.disable();
     super.dispose();
   }
 
@@ -33,6 +41,55 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
       setState(() {});
     })
       ..start();
+
+    _initializeApp();
+    _startDimTimer();
+  }
+
+  void _initializeApp() async {
+    // Activar wakelock para mantener pantalla encendida
+    WakelockPlus.enable();
+
+    // Guardar brillo original
+    try {
+      _originalBrightness = await ScreenBrightness().current;
+    } catch (e) {
+      _originalBrightness = 1.0;
+    }
+  }
+
+  void _startDimTimer() {
+    _dimTimer?.cancel();
+    _dimTimer = Timer(Duration(minutes: 2), () {
+      _dimScreen();
+    });
+  }
+
+  void _dimScreen() async {
+    if (!_isDimmed) {
+      setState(() {
+        _isDimmed = true;
+      });
+      try {
+        await ScreenBrightness().setScreenBrightness(0.1);
+      } catch (e) {
+        // Manejar error silenciosamente
+      }
+    }
+  }
+
+  void _restoreBrightness() async {
+    if (_isDimmed) {
+      setState(() {
+        _isDimmed = false;
+      });
+      try {
+        await ScreenBrightness().setScreenBrightness(_originalBrightness);
+      } catch (e) {
+        // Manejar error silenciosamente
+      }
+      _startDimTimer();
+    }
   }
 
   @override
@@ -43,107 +100,63 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
 
   @override
   Widget build(BuildContext context) {
-    var time = DateTime.now().millisecondsSinceEpoch / 2000;
-    var scaleX = 1.2 + sin(time) * .11;
-    var scaleY = 1.2 + cos(time) * .1;
-    var offsetY = 20 + cos(time) * 20;
 
-    return Scaffold(
-      backgroundColor: kBlueishDye,
-      body: Stack(
-        alignment: Alignment.center,
-        fit: StackFit.expand,
-        children: <Widget>[
-          Transform(
-            transform: Matrix4.diagonal3Values(scaleX, scaleY, 1),
-            child: Transform.translate(
-              offset: Offset(
-                  -(scaleX - 1) / 2 * MediaQuery.of(context).size.width,
-                  -(scaleY - 1) / 2 * MediaQuery.of(context).size.height +
-                      offsetY),
-              child: Image.asset(
-                'assets/background.png',
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 30),
-            child: Row(
-              children: <Widget>[
-                NavigationRail(
-                  backgroundColor: Colors.transparent,
-                  selectedIndex: _selectedIndex,
-                  onDestinationSelected: (int index) {
-                    fixedPlayer.stop();
-                    playState = false;
-                    setState(() {
-                      _selectedIndex = index;
-                    });
-                  },
-                  labelType: NavigationRailLabelType.selected,
-                  destinations: [
-                    NavigationRailDestination(
-                      icon: Icon(Icons.grain, color: Colors.white),
-                      selectedIcon: Icon(Icons.grain, color: Colors.white),
-                      label: Text(
-                        'Rain',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.cloud, color: Colors.white),
-                      selectedIcon: Icon(Icons.cloud, color: Colors.white),
-                      label: Text(
-                        'Thunder',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-
-                    NavigationRailDestination(
-                      icon: Icon(Icons.clear_all, color: Colors.white),
-                      selectedIcon: Icon(Icons.clear_all, color: Colors.white),
-                      label: Text(
-                        'Wind',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
+    return GestureDetector(
+      onTap: _restoreBrightness,
+      onPanUpdate: (_) => _restoreBrightness(),
+      child: Scaffold(
+        backgroundColor: kBlueishDye,
+        body: Stack(
+          alignment: Alignment.center,
+          fit: StackFit.expand,
+          children: <Widget>[
+            // Fondo blanco y negro
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black,
+                    Colors.grey.shade900,
+                    Colors.black,
                   ],
                 ),
-                getRightContentCards(_selectedIndex),
-              ],
+              ),
             ),
-          ),
-        ],
+
+            // Reproductor que funciona
+            WorkingAudioPlayer(),
+
+            // Overlay de dimmer
+            if (_isDimmed)
+              Container(
+                color: Colors.black.withOpacity(0.7),
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.bedtime,
+                        color: Colors.white.withOpacity(0.5),
+                        size: 40,
+                      ),
+                      SizedBox(height: 10),
+                      Text(
+                        'Tap to wake',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.5),
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget getRightContentCards(int selectedIndex) {
-    switch (selectedIndex) {
-      case 0:
-        return ContentCards(
-          selectedIndex: _selectedIndex,
-          bgColor: kBlueCardBackground,
-          fixedPlayer: fixedPlayer,
-          assetName: "rain.mp3",
-        );
-      case 1:
-        return ContentCards(
-          selectedIndex: _selectedIndex,
-          bgColor: kBlueishDye,
-          fixedPlayer: fixedPlayer,
-          assetName: "thunder.mp3",
-        );
-      case 2:
-        return ContentCards(
-          selectedIndex: _selectedIndex,
-          bgColor: kGreenAlgua,
-          fixedPlayer: fixedPlayer,
-          assetName: "wind.mp3",
-        );
-      default:
-        return Container();
-    }
-  }
 }

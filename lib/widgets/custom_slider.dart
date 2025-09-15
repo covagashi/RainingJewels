@@ -26,89 +26,84 @@ class _SliderWidgetState extends State<SliderWidget> {
 
   @override
   Widget build(BuildContext context) {
-    double paddingFactor = .2;
-
-    if (this.widget.fullWidth) paddingFactor = .3;
-
     return Container(
-      width: this.widget.fullWidth
-          ? double.infinity
-          : (this.widget.sliderHeight) * 5.5,
-      height: (this.widget.sliderHeight),
-      decoration: new BoxDecoration(
-        borderRadius: new BorderRadius.all(
-          Radius.circular((this.widget.sliderHeight * .3)),
+      width: this.widget.fullWidth ? double.infinity : 300,
+      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      margin: EdgeInsets.symmetric(horizontal: 20),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.2),
+          width: 1,
         ),
-        gradient: new LinearGradient(
-            colors: [
-              const Color(0xFF00c6ff),
-              const Color(0xFF0072ff),
-            ],
-            begin: const FractionalOffset(0.0, 0.0),
-            end: const FractionalOffset(1.0, 1.00),
-            stops: [0.0, 1.0],
-            tileMode: TileMode.clamp),
       ),
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(this.widget.sliderHeight * paddingFactor,
-            2, this.widget.sliderHeight * paddingFactor, 2),
-        child: Row(
-          children: <Widget>[
-            Text(
-              '${this.widget.min}',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: this.widget.sliderHeight * .3,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Etiqueta de volumen
+          Row(
+            children: [
+              Icon(
+                Icons.volume_up_rounded,
+                color: Colors.white.withOpacity(0.9),
+                size: 20,
               ),
-            ),
-            SizedBox(
-              width: this.widget.sliderHeight * .1,
-            ),
-            Expanded(
-              child: Center(
-                child: SliderTheme(
-                  data: SliderTheme.of(context).copyWith(
-                    activeTrackColor: Colors.white.withOpacity(1),
-                    inactiveTrackColor: Colors.white.withOpacity(.5),
-
-                    trackHeight: 4.0,
-                    thumbShape: CustomSliderThumbCircle(
-                      thumbRadius: this.widget.sliderHeight * .4,
-                      min: this.widget.min,
-                      max: this.widget.max,
-                    ),
-                    overlayColor: Colors.white.withOpacity(.4),
-                    //valueIndicatorColor: Colors.white,
-                    activeTickMarkColor: Colors.white,
-                    inactiveTickMarkColor: Colors.red.withOpacity(.7),
-                  ),
-                  child: Slider(
-                      value: widget.acValue,
-                      onChanged: (value) {
-                        setState(() {
-                          widget.acValue = value;
-                        });
-                      }),
+              SizedBox(width: 8),
+              Text(
+                'Volume',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.9),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
-            ),
-            SizedBox(
-              width: this.widget.sliderHeight * .1,
-            ),
-            Text(
-              '${this.widget.max}',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: this.widget.sliderHeight * .3,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
+              Spacer(),
+              Text(
+                '${widget.acValue.round()}',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12),
+          // Slider moderno
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              activeTrackColor: Colors.white,
+              inactiveTrackColor: Colors.white.withOpacity(0.3),
+              trackHeight: 4.0,
+              thumbColor: Colors.white,
+              thumbShape: RoundSliderThumbShape(
+                enabledThumbRadius: 8.0,
+                elevation: 4.0,
+              ),
+              overlayColor: Colors.white.withOpacity(0.2),
+              overlayShape: RoundSliderOverlayShape(overlayRadius: 16.0),
+              valueIndicatorShape: PaddleSliderValueIndicatorShape(),
+              valueIndicatorColor: Colors.white,
+              valueIndicatorTextStyle: TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.w600,
               ),
             ),
-          ],
-        ),
+            child: Slider(
+              value: widget.acValue,
+              min: widget.min.toDouble(),
+              max: widget.max.toDouble(),
+              divisions: widget.max - widget.min,
+              label: '${widget.acValue.round()}',
+              onChanged: (value) {
+                setState(() {
+                  widget.acValue = value;
+                });
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
