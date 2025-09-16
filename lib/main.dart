@@ -3,22 +3,43 @@ import 'package:rainingjewels_new/kConstant.dart';
 import 'package:rainingjewels_new/screens/homepage.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:rainingjewels_new/services/audio_service.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize audio service
-  await AudioService.init(
-    builder: () => AudioPlayerHandler(),
-    config: AudioServiceConfig(
-      androidNotificationChannelId: 'com.covaga.jewelrain.channel.audio',
-      androidNotificationChannelName: 'Jewel Rain Audio',
-      androidNotificationOngoing: true,
-      androidShowNotificationBadge: false,
-    ),
-  );
+  // Request notification permission for Android 13+
+  await _requestNotificationPermission();
+
+  // Initialize audio service with error handling
+  try {
+    await AudioService.init(
+      builder: () => AudioPlayerHandler(),
+      config: AudioServiceConfig(
+        androidNotificationChannelId: 'com.covaga.jewelrain.channel.audio',
+        androidNotificationChannelName: 'Jewel Rain Audio',
+        androidNotificationChannelDescription: 'Audio playback controls for Jewel Rain',
+        androidNotificationOngoing: true,
+        androidShowNotificationBadge: true,
+        androidStopForegroundOnPause: false,
+        androidNotificationIcon: 'mipmap/ic_launcher',
+        androidNotificationClickStartsActivity: true,
+      ),
+    );
+    print('Audio service initialized successfully');
+  } catch (e) {
+    print('Error initializing audio service: $e');
+    // Continue anyway, the app should still work without background audio
+  }
 
   runApp(MyApp());
+}
+
+Future<void> _requestNotificationPermission() async {
+  // Only request permission on Android
+  if (await Permission.notification.isDenied) {
+    await Permission.notification.request();
+  }
 }
 
 class MyApp extends StatelessWidget {

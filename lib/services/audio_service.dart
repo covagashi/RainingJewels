@@ -1,5 +1,6 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:just_audio/just_audio.dart';
+import 'dart:async';
 
 class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
   static final _instance = AudioPlayerHandler._internal();
@@ -11,8 +12,19 @@ class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
 
   static AudioPlayerHandler get instance => _instance;
 
+  // Stream para comunicar con el widget
+  final StreamController<String> _controlEventController = StreamController<String>.broadcast();
+  Stream<String> get controlEvents => _controlEventController.stream;
+
   Future<void> initializeIfNeeded() async {
     if (_isInitialized) return;
+
+    // Set initial state
+    playbackState.add(PlaybackState(
+      controls: [MediaControl.play],
+      playing: false,
+      processingState: AudioProcessingState.idle,
+    ));
 
     // Configure player
     _player.playerStateStream.listen((playerState) {
@@ -63,38 +75,66 @@ class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
   Future<void> playAudio(String assetPath, String title) async {
     await initializeIfNeeded();
 
-    // Set media item
+    // Set media item for notification
     mediaItem.add(MediaItem(
       id: assetPath,
       title: title,
       artist: 'Jewel Rain',
+      album: 'Nature Sounds',
       duration: null, // Loop infinito
-      artUri: null,
+      artUri: null, // Removemos el icono por ahora para evitar problemas
+      extras: {'isLoop': true},
     ));
 
-    try {
-      await _player.setAsset('assets/$assetPath');
-      await _player.setLoopMode(LoopMode.one);
-      await _player.play();
-    } catch (e) {
-      print('Error playing audio: $e');
-    }
+    // Solo actualizar el estado para la notificación, no reproducir
+    playbackState.add(PlaybackState(
+      controls: [MediaControl.pause, MediaControl.stop],
+      playing: true,
+      processingState: AudioProcessingState.ready,
+      updatePosition: Duration.zero,
+    ));
+
+    // Debug: verificar que el estado se está enviando
+    print('AudioService: Setting playback state to playing');
   }
 
   @override
   Future<void> play() async {
-    await _player.play();
+    print('AudioService: Play button pressed');
+    _controlEventController.add('play');
+
+    // Update state immediately for responsiveness
+    playbackState.add(PlaybackState(
+      controls: [MediaControl.pause, MediaControl.stop],
+      playing: true,
+      processingState: AudioProcessingState.ready,
+    ));
   }
 
   @override
   Future<void> pause() async {
-    await _player.pause();
+    print('AudioService: Pause button pressed');
+    _controlEventController.add('pause');
+
+    // Update state immediately for responsiveness
+    playbackState.add(PlaybackState(
+      controls: [MediaControl.play, MediaControl.stop],
+      playing: false,
+      processingState: AudioProcessingState.ready,
+    ));
   }
 
   @override
   Future<void> stop() async {
-    await _player.stop();
-    await _player.seek(Duration.zero);
+    print('AudioService: Stop button pressed');
+    _controlEventController.add('stop');
+
+    // Update playback state to stopped
+    playbackState.add(PlaybackState(
+      controls: [MediaControl.play],
+      playing: false,
+      processingState: AudioProcessingState.idle,
+    ));
   }
 
   @override
@@ -110,5 +150,6 @@ class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
 
   void dispose() {
     _player.dispose();
+    _controlEventController.close();
   }
 }
