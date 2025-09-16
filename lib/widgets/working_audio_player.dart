@@ -20,6 +20,7 @@ class _WorkingAudioPlayerState extends State<WorkingAudioPlayer> {
   int _timerMinutes = 0;
   bool _timerActive = false;
   int _remainingSeconds = 0;
+  StreamSubscription<String>? _controlEventSubscription;
 
   final List<SoundOption> _sounds = [
     SoundOption('Rain', 'rain.mp3', '🌧️', Colors.white),
@@ -28,48 +29,105 @@ class _WorkingAudioPlayerState extends State<WorkingAudioPlayer> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+
+    // Escuchar eventos de control del AudioService
+    _controlEventSubscription = _audioHandler.controlEvents.listen((event) {
+      print('Widget received control event: $event');
+      _handleControlEvent(event);
+    });
+  }
+
+  @override
   void dispose() {
     _audioPlayer.dispose();
     _sleepTimer?.cancel();
+    _controlEventSubscription?.cancel();
     super.dispose();
   }
 
-  void _togglePlay() async {
-    try {
-      if (_isPlaying) {
-        await _audioHandler.stop();
+  void _handleControlEvent(String event) async {
+    switch (event) {
+      case 'play':
+        if (!_isPlaying) {
+          await _audioPlayer.resume();
+          setState(() {
+            _isPlaying = true;
+          });
+        }
+        break;
+      case 'pause':
+        if (_isPlaying) {
+          await _audioPlayer.pause();
+          setState(() {
+            _isPlaying = false;
+          });
+        }
+        break;
+      case 'stop':
+        await _audioPlayer.stop();
         setState(() {
           _isPlaying = false;
         });
-      } else {
-        String assetPath = _sounds[_selectedSound].asset;
-        String title = _sounds[_selectedSound].name;
-        await _audioHandler.playAudio(assetPath, title);
-        await _audioHandler.setVolume(_volume);
-        setState(() {
-          _isPlaying = true;
-        });
-      }
-    } catch (e) {
-      print('Error playing audio: $e');
+        break;
     }
   }
 
+
   void _changeSound(int index) async {
+    // Si toca el mismo emoji que está seleccionado, toggle play/pause
+    if (index == _selectedSound && _isPlaying) {
+      await _audioPlayer.stop();
+      await _audioHandler.stop();
+      setState(() {
+        _isPlaying = false;
+      });
+      return;
+    }
+
     setState(() {
       _selectedSound = index;
     });
 
-    if (_isPlaying) {
+    // Cambiar sonido y reproducir
+    try {
+      // Parar ambos players
+      await _audioPlayer.stop();
+      await _audioHandler.stop();
+
+      String assetPath = _sounds[_selectedSound].asset;
+      String title = _sounds[_selectedSound].name;
+
+      print('Intentando reproducir: $assetPath');
+
+      // Reproducir con AudioPlayer (sonido real)
+      await _audioPlayer.play(AssetSource(assetPath));
+      await _audioPlayer.setReleaseMode(ReleaseMode.loop);
+      await _audioPlayer.setVolume(_volume);
+
+      print('Audio iniciado exitosamente');
+
+      // Actualizar AudioService (notificación) - solo en móvil
       try {
-        await _audioPlayer.stop();
-        String assetPath = _sounds[_selectedSound].asset;
-        await _audioPlayer.play(AssetSource(assetPath));
-        await _audioPlayer.setReleaseMode(ReleaseMode.loop);
-        await _audioPlayer.setVolume(_volume);
-      } catch (e) {
-        print('Error changing sound: $e');
+        await _audioHandler.playAudio(assetPath, title);
+        await _audioHandler.setVolume(_volume);
+      } catch (serviceError) {
+        print('AudioService error (normal en web): $serviceError');
       }
+
+      setState(() {
+        _isPlaying = true;
+      });
+    } catch (e) {
+      print('Error changing sound: $e');
+      // Mostrar error al usuario
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al reproducir audio: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -77,6 +135,7 @@ class _WorkingAudioPlayerState extends State<WorkingAudioPlayer> {
     setState(() {
       _volume = value;
     });
+    await _audioPlayer.setVolume(_volume);
     await _audioHandler.setVolume(_volume);
   }
 
@@ -111,22 +170,7 @@ class _WorkingAudioPlayerState extends State<WorkingAudioPlayer> {
   }
 
   void _openFAQ() async {
-    final Uri emailUri = Uri(
-      scheme: 'mailto',
-      path: 'hello@covaga.xyz',
-      query: 'subject=Raining Jewels - FAQ',
-    );
-
-    try {
-      if (await canLaunchUrl(emailUri)) {
-        await launchUrl(emailUri);
-      } else {
-        // Fallback: mostrar el email en un diálogo
-        _showEmailDialog();
-      }
-    } catch (e) {
-      _showEmailDialog();
-    }
+    _showEmailDialog();
   }
 
   void _showEmailDialog() {
@@ -152,11 +196,14 @@ class _WorkingAudioPlayerState extends State<WorkingAudioPlayer> {
   void _fadeOutAndStop() async {
     for (double vol = _volume; vol >= 0; vol -= 0.05) {
       await _audioPlayer.setVolume(vol);
+      await _audioHandler.setVolume(vol);
       await Future.delayed(Duration(milliseconds: 100));
     }
 
     await _audioPlayer.stop();
+    await _audioHandler.stop();
     await _audioPlayer.setVolume(_volume);
+    await _audioHandler.setVolume(_volume);
 
     setState(() {
       _isPlaying = false;
@@ -248,31 +295,6 @@ class _WorkingAudioPlayerState extends State<WorkingAudioPlayer> {
             ),
 
             SizedBox(height: 50),
-
-            // Botón play
-            GestureDetector(
-              onTap: _togglePlay,
-              child: Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.white.withOpacity(0.4),
-                      blurRadius: _isPlaying ? 20 : 10,
-                      spreadRadius: _isPlaying ? 5 : 2,
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  _isPlaying ? Icons.pause : Icons.play_arrow,
-                  size: 40,
-                  color: Colors.black,
-                ),
-              ),
-            ),
 
             Spacer(),
 

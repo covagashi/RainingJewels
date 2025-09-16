@@ -5,7 +5,9 @@
       "Bash(flutter config:*)",
       "Bash(flutter doctor:*)",
       "Bash(flutter clean:*)",
-      "Bash(flutter build:*)"
+      "Bash(flutter build:*)",
+      "Bash(dir C:UsersdaviannDocuments_yoRainingJewelsassets)",
+      "WebSearch"
     ],
     "deny": [],
     "ask": []

@@ -18,6 +18,8 @@ dependencies:
   url_launcher: ^6.2.5
   audio_service: ^0.18.15
   just_audio: ^0.9.40
+  audio_session: ^0.1.25
+  permission_handler: ^11.3.1
   
 
   cupertino_icons: ^1.0.6
