@@ -7,7 +7,14 @@
       "Bash(flutter clean:*)",
       "Bash(flutter build:*)",
       "Bash(dir C:UsersdaviannDocuments_yoRainingJewelsassets)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(dir:*)",
+      "Bash(keytool:*)",
+      "Bash(where java)",
+      "Bash(\"C:\\Program Files (x86)\\Common Files\\Oracle\\Java\\java8path\\keytool.exe\" -genkey -v -keystore android/app/upload-keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload)",
+      "Read(//c/**)",
+      "Bash(\"/c/Program Files/Java/jdk-23/bin/keytool.exe\" -genkey -v -keystore android/app/upload-keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload -storepass android -keypass android -dname \"CN=RainingJewels, OU=Covaga, O=Covaga, L=City, S=State, C=ES\")",
+      "Bash(\"/c/Program Files/Java/jdk-23/bin/jarsigner.exe\" -verify -verbose -certs build/app/outputs/bundle/release/app-release.aab)"
     ],
     "deny": [],
     "ask": []

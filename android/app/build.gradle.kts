@@ -19,6 +19,15 @@ android {
         jvmTarget = JavaVersion.VERSION_11.toString()
     }
 
+    signingConfigs {
+        create("release") {
+            keyAlias = "upload"
+            keyPassword = "android"
+            storeFile = file("upload-keystore.jks")
+            storePassword = "android"
+        }
+    }
+
     defaultConfig {
         applicationId = "com.covaga.jewelrain"
         // You can update the following values to match your application needs.
@@ -31,8 +40,7 @@ android {
 
     buildTypes {
         release {
-            // Para desarrollo usa debug keys, para producción necesitarás tu keystore
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 }
