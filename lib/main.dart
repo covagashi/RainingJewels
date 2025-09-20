@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:rainingjewels_new/kConstant.dart';
 import 'package:rainingjewels_new/screens/homepage.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:rainingjewels_new/services/audio_service.dart';
@@ -19,9 +18,9 @@ void main() async {
         androidNotificationChannelId: 'com.covaga.jewelrain.channel.audio',
         androidNotificationChannelName: 'Jewel Rain Audio',
         androidNotificationChannelDescription: 'Audio playback controls for Jewel Rain',
-        androidNotificationOngoing: true,
+        androidNotificationOngoing: false,
         androidShowNotificationBadge: true,
-        androidStopForegroundOnPause: false,
+        androidStopForegroundOnPause: true,
         androidNotificationIcon: 'mipmap/ic_launcher',
         androidNotificationClickStartsActivity: true,
       ),
@@ -42,12 +41,61 @@ Future<void> _requestNotificationPermission() async {
   }
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
+  @override
+  _MyAppState createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   final _navigatorKey = GlobalKey<NavigatorState>();
-  // This widget is the root of your application.
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    switch (state) {
+      case AppLifecycleState.detached:
+      case AppLifecycleState.hidden:
+        // App is being closed or hidden - stop all audio
+        _stopAllAudio();
+        break;
+      case AppLifecycleState.paused:
+        // App goes to background - optionally pause audio
+        // For now, let it continue playing in background
+        break;
+      case AppLifecycleState.resumed:
+        // App comes back to foreground
+        break;
+      case AppLifecycleState.inactive:
+        // App is inactive (e.g., during phone call)
+        break;
+    }
+  }
+
+  void _stopAllAudio() async {
+    try {
+      // Stop the audio handler directly (recommended approach)
+      await AudioPlayerHandler.instance.stopAndDispose();
+      print('Audio service stopped due to app lifecycle change');
+    } catch (e) {
+      print('Error stopping audio service: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    var routeName;
     return MaterialApp(
         navigatorKey: _navigatorKey,
         title: 'Jewel Rain',

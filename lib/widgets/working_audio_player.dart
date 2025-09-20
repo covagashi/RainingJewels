@@ -40,8 +40,14 @@ class _WorkingAudioPlayerState extends State<WorkingAudioPlayer> {
   }
 
   @override
-  void dispose() {
-    _audioPlayer.dispose();
+  void dispose() async {
+    // Stop audio before disposing
+    if (_isPlaying) {
+      await _audioPlayer.stop();
+      await _audioHandler.stop();
+    }
+
+    await _audioPlayer.dispose();
     _sleepTimer?.cancel();
     _controlEventSubscription?.cancel();
     super.dispose();

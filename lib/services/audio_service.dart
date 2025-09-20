@@ -129,6 +129,9 @@ class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
     print('AudioService: Stop button pressed');
     _controlEventController.add('stop');
 
+    // Stop the actual audio player
+    await _player.stop();
+
     // Update playback state to stopped
     playbackState.add(PlaybackState(
       controls: [MediaControl.play],
@@ -147,6 +150,27 @@ class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
   }
 
   bool get isPlaying => _player.playing;
+
+  Future<void> stopAndDispose() async {
+    try {
+      await _player.stop();
+      await _player.dispose();
+      await _controlEventController.close();
+
+      // Clear media item and reset state
+      mediaItem.add(null);
+      playbackState.add(PlaybackState(
+        controls: [MediaControl.play],
+        playing: false,
+        processingState: AudioProcessingState.idle,
+      ));
+
+      _isInitialized = false;
+      print('AudioService: Stopped and disposed successfully');
+    } catch (e) {
+      print('Error during stopAndDispose: $e');
+    }
+  }
 
   void dispose() {
     _player.dispose();

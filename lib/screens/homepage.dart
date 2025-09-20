@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -26,11 +25,29 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
   double _originalBrightness = 1.0;
 
   @override
-  void dispose() {
+  void dispose() async {
     _ticker.dispose();
-    fixedPlayer.dispose();
+
+    // Stop and dispose audio properly
+    try {
+      await fixedPlayer.stop();
+      await fixedPlayer.dispose();
+    } catch (e) {
+      print('Error disposing fixedPlayer: $e');
+    }
+
     _dimTimer?.cancel();
     WakelockPlus.disable();
+
+    // Restore original brightness if dimmed
+    if (_isDimmed) {
+      try {
+        await ScreenBrightness().setScreenBrightness(_originalBrightness);
+      } catch (e) {
+        print('Error restoring brightness: $e');
+      }
+    }
+
     super.dispose();
   }
 
