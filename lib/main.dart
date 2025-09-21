@@ -18,9 +18,9 @@ void main() async {
         androidNotificationChannelId: 'com.covaga.jewelrain.channel.audio',
         androidNotificationChannelName: 'Jewel Rain Audio',
         androidNotificationChannelDescription: 'Audio playback controls for Jewel Rain',
-        androidNotificationOngoing: false,
+        androidNotificationOngoing: true,
         androidShowNotificationBadge: true,
-        androidStopForegroundOnPause: true,
+        androidStopForegroundOnPause: false,
         androidNotificationIcon: 'mipmap/ic_launcher',
         androidNotificationClickStartsActivity: true,
       ),
@@ -67,19 +67,26 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
     switch (state) {
       case AppLifecycleState.detached:
+        // App is being completely closed - stop all audio
+        print('App detached - stopping all audio');
+        _stopAllAudio();
+        break;
       case AppLifecycleState.hidden:
-        // App is being closed or hidden - stop all audio
+        // App is hidden (could be killed) - stop audio to prevent zombie playback
+        print('App hidden - stopping audio to prevent background zombie playback');
         _stopAllAudio();
         break;
       case AppLifecycleState.paused:
-        // App goes to background - optionally pause audio
-        // For now, let it continue playing in background
+        // App goes to background - keep audio and notification active
+        print('App paused - keeping audio service active for background playback');
         break;
       case AppLifecycleState.resumed:
-        // App comes back to foreground
+        // App comes back to foreground - ensure notification is visible if audio is playing
+        print('App resumed - checking audio service state');
+        _ensureNotificationVisible();
         break;
       case AppLifecycleState.inactive:
-        // App is inactive (e.g., during phone call)
+        // App is inactive (e.g., during phone call) - keep audio running
         break;
     }
   }
@@ -91,6 +98,20 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       print('Audio service stopped due to app lifecycle change');
     } catch (e) {
       print('Error stopping audio service: $e');
+    }
+  }
+
+  void _ensureNotificationVisible() async {
+    try {
+      // Check if audio is currently playing
+      final audioHandler = AudioPlayerHandler.instance;
+      if (audioHandler.isPlaying) {
+        // Re-initialize the audio service to restore notification
+        await audioHandler.initializeIfNeeded();
+        print('Audio service notification restored');
+      }
+    } catch (e) {
+      print('Error restoring notification: $e');
     }
   }
 

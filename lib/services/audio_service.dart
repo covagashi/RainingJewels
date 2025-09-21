@@ -13,8 +13,16 @@ class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
   static AudioPlayerHandler get instance => _instance;
 
   // Stream para comunicar con el widget
-  final StreamController<String> _controlEventController = StreamController<String>.broadcast();
-  Stream<String> get controlEvents => _controlEventController.stream;
+  StreamController<String>? _controlEventController;
+
+  StreamController<String> get _getOrCreateController {
+    if (_controlEventController == null || _controlEventController!.isClosed) {
+      _controlEventController = StreamController<String>.broadcast();
+    }
+    return _controlEventController!;
+  }
+
+  Stream<String> get controlEvents => _getOrCreateController.stream;
 
   Future<void> initializeIfNeeded() async {
     if (_isInitialized) return;
@@ -101,7 +109,7 @@ class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
   @override
   Future<void> play() async {
     print('AudioService: Play button pressed');
-    _controlEventController.add('play');
+    _getOrCreateController.add('play');
 
     // Update state immediately for responsiveness
     playbackState.add(PlaybackState(
@@ -114,7 +122,7 @@ class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
   @override
   Future<void> pause() async {
     print('AudioService: Pause button pressed');
-    _controlEventController.add('pause');
+    _getOrCreateController.add('pause');
 
     // Update state immediately for responsiveness
     playbackState.add(PlaybackState(
@@ -127,7 +135,7 @@ class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
   @override
   Future<void> stop() async {
     print('AudioService: Stop button pressed');
-    _controlEventController.add('stop');
+    _getOrCreateController.add('stop');
 
     // Stop the actual audio player
     await _player.stop();
@@ -153,17 +161,27 @@ class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
 
   Future<void> stopAndDispose() async {
     try {
+      // Stop the player first
       await _player.stop();
-      await _player.dispose();
-      await _controlEventController.close();
 
-      // Clear media item and reset state
+      // Clear the media session
       mediaItem.add(null);
+
+      // Set the playback state to stopped/idle to remove notification
       playbackState.add(PlaybackState(
         controls: [MediaControl.play],
         playing: false,
         processingState: AudioProcessingState.idle,
       ));
+
+      // Close the stream controller
+      if (_controlEventController != null && !_controlEventController!.isClosed) {
+        await _controlEventController!.close();
+        _controlEventController = null;
+      }
+
+      // Dispose the player
+      await _player.dispose();
 
       _isInitialized = false;
       print('AudioService: Stopped and disposed successfully');
@@ -174,6 +192,8 @@ class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
 
   void dispose() {
     _player.dispose();
-    _controlEventController.close();
+    if (_controlEventController != null && !_controlEventController!.isClosed) {
+      _controlEventController!.close();
+    }
   }
 }
