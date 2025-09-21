@@ -31,11 +31,25 @@ class _WorkingAudioPlayerState extends State<WorkingAudioPlayer> {
   @override
   void initState() {
     super.initState();
+    _setupControlEventSubscription();
+  }
 
-    // Escuchar eventos de control del AudioService
+  void _setupControlEventSubscription() {
+    // Cancel existing subscription if any
+    _controlEventSubscription?.cancel();
+
+    // Create new subscription
     _controlEventSubscription = _audioHandler.controlEvents.listen((event) {
       print('Widget received control event: $event');
       _handleControlEvent(event);
+    }, onError: (error) {
+      print('Error in control event stream: $error');
+      // Try to recreate subscription after a short delay
+      Future.delayed(Duration(seconds: 1), () {
+        if (mounted) {
+          _setupControlEventSubscription();
+        }
+      });
     });
   }
 
@@ -47,9 +61,18 @@ class _WorkingAudioPlayerState extends State<WorkingAudioPlayer> {
       await _audioHandler.stop();
     }
 
+    // Ensure everything is properly disposed
     await _audioPlayer.dispose();
     _sleepTimer?.cancel();
     _controlEventSubscription?.cancel();
+
+    // Force stop the audio service to prevent background playback
+    try {
+      await _audioHandler.stopAndDispose();
+    } catch (e) {
+      print('Error stopping audio handler in dispose: $e');
+    }
+
     super.dispose();
   }
 
@@ -118,8 +141,24 @@ class _WorkingAudioPlayerState extends State<WorkingAudioPlayer> {
       try {
         await _audioHandler.playAudio(assetPath, title);
         await _audioHandler.setVolume(_volume);
+
+        // Ensure subscription is working after potential stream recreation
+        if (_controlEventSubscription == null || _controlEventSubscription!.isPaused) {
+          _setupControlEventSubscription();
+        }
       } catch (serviceError) {
-        print('AudioService error (normal en web): $serviceError');
+        print('AudioService error: $serviceError');
+        if (serviceError.toString().contains('Bad state: cannot add new events after calling close')) {
+          // Stream was closed, recreate subscription
+          _setupControlEventSubscription();
+          // Try audio service again
+          try {
+            await _audioHandler.playAudio(assetPath, title);
+            await _audioHandler.setVolume(_volume);
+          } catch (retryError) {
+            print('Retry failed: $retryError');
+          }
+        }
       }
 
       setState(() {
