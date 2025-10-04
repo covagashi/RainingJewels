@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:rainingjewels_new/screens/homepage.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:rainingjewels_new/services/audio_service.dart';
+import 'package:rainingjewels_new/services/review_service.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 void main() async {
@@ -53,6 +54,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+
+    // Incrementar contador de sesiones para el sistema de reseñas
+    ReviewService.incrementSessionCount();
   }
 
   @override
@@ -84,6 +88,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         // App comes back to foreground - ensure notification is visible if audio is playing
         print('App resumed - checking audio service state');
         _ensureNotificationVisible();
+        // Solicitar reseña si es apropiado
+        ReviewService.requestReviewIfAppropriate();
         break;
       case AppLifecycleState.inactive:
         // App is inactive (e.g., during phone call) - keep audio running
