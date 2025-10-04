@@ -1,7 +1,7 @@
 name: rainingjewels_new
-description: "A new Flutter project."
+description: "Basic relaxing sounds for meditation and sleep."
 publish_to: 'none'
-version: 1.0.3+4
+version: 1.0.4+5
 
 environment:
   sdk: '>=3.3.4 <4.0.0'
@@ -20,7 +20,9 @@ dependencies:
   just_audio: ^0.9.40
   audio_session: ^0.1.25
   permission_handler: ^11.3.1
-  
+  in_app_review: ^2.0.9
+  shared_preferences: ^2.3.3
+
 
   cupertino_icons: ^1.0.6
 
