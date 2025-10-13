@@ -12,17 +12,11 @@ class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
 
   static AudioPlayerHandler get instance => _instance;
 
-  // Stream para comunicar con el widget
-  StreamController<String>? _controlEventController;
-
-  StreamController<String> get _getOrCreateController {
-    if (_controlEventController == null || _controlEventController!.isClosed) {
-      _controlEventController = StreamController<String>.broadcast();
-    }
-    return _controlEventController!;
-  }
-
-  Stream<String> get controlEvents => _getOrCreateController.stream;
+  // Public getters for external access
+  bool get isPlaying => _player.playing;
+  double get volume => _player.volume;
+  Stream<PlayerState> get playerStateStream => _player.playerStateStream;
+  Stream<Duration> get positionStream => _player.positionStream;
 
   Future<void> initializeIfNeeded() async {
     if (_isInitialized) return;
@@ -83,35 +77,48 @@ class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
   Future<void> playAudio(String assetPath, String title) async {
     await initializeIfNeeded();
 
-    // Set media item for notification
-    mediaItem.add(MediaItem(
-      id: assetPath,
-      title: title,
-      artist: 'Jewel Rain',
-      album: 'Nature Sounds',
-      duration: null, // Loop infinito
-      artUri: null, // Removemos el icono por ahora para evitar problemas
-      extras: {'isLoop': true},
-    ));
+    try {
+      // Stop current playback if any
+      await _player.stop();
 
-    // Solo actualizar el estado para la notificación, no reproducir
-    playbackState.add(PlaybackState(
-      controls: [MediaControl.pause, MediaControl.stop],
-      playing: true,
-      processingState: AudioProcessingState.ready,
-      updatePosition: Duration.zero,
-    ));
+      // Load and play the audio file
+      await _player.setAsset('assets/$assetPath');
+      await _player.setLoopMode(LoopMode.one); // Loop infinito
+      await _player.play();
 
-    // Debug: verificar que el estado se está enviando
-    print('AudioService: Setting playback state to playing');
+      // Set media item for notification
+      mediaItem.add(MediaItem(
+        id: assetPath,
+        title: title,
+        artist: 'Jewel Rain',
+        album: 'Nature Sounds',
+        duration: null, // Loop infinito
+        artUri: null,
+        extras: {'isLoop': true},
+      ));
+
+      // Update playback state
+      playbackState.add(PlaybackState(
+        controls: [MediaControl.pause, MediaControl.stop],
+        playing: true,
+        processingState: AudioProcessingState.ready,
+      ));
+
+      print('AudioService: Playing $assetPath');
+    } catch (e) {
+      print('AudioService: Error playing audio: $e');
+      throw e;
+    }
   }
 
   @override
   Future<void> play() async {
     print('AudioService: Play button pressed');
-    _getOrCreateController.add('play');
 
-    // Update state immediately for responsiveness
+    // Actually play the audio
+    await _player.play();
+
+    // Update state
     playbackState.add(PlaybackState(
       controls: [MediaControl.pause, MediaControl.stop],
       playing: true,
@@ -122,9 +129,11 @@ class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
   @override
   Future<void> pause() async {
     print('AudioService: Pause button pressed');
-    _getOrCreateController.add('pause');
 
-    // Update state immediately for responsiveness
+    // Actually pause the audio
+    await _player.pause();
+
+    // Update state
     playbackState.add(PlaybackState(
       controls: [MediaControl.play, MediaControl.stop],
       playing: false,
@@ -135,10 +144,12 @@ class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
   @override
   Future<void> stop() async {
     print('AudioService: Stop button pressed');
-    _getOrCreateController.add('stop');
 
     // Stop the actual audio player
     await _player.stop();
+
+    // Clear media item
+    mediaItem.add(null);
 
     // Update playback state to stopped
     playbackState.add(PlaybackState(
@@ -157,8 +168,6 @@ class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
     await _player.setVolume(volume);
   }
 
-  bool get isPlaying => _player.playing;
-
   Future<void> stopAndDispose() async {
     try {
       // Stop the player first
@@ -174,15 +183,6 @@ class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
         processingState: AudioProcessingState.idle,
       ));
 
-      // Close the stream controller
-      if (_controlEventController != null && !_controlEventController!.isClosed) {
-        await _controlEventController!.close();
-        _controlEventController = null;
-      }
-
-      // Dispose the player
-      await _player.dispose();
-
       _isInitialized = false;
       print('AudioService: Stopped and disposed successfully');
     } catch (e) {
@@ -190,10 +190,10 @@ class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
     }
   }
 
-  void dispose() {
-    _player.dispose();
-    if (_controlEventController != null && !_controlEventController!.isClosed) {
-      _controlEventController!.close();
-    }
+  @override
+  Future<void> onTaskRemoved() async {
+    // Called when user swipes away the app from recents
+    await stopAndDispose();
+    await super.onTaskRemoved();
   }
 }

@@ -149,13 +149,14 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        padding: EdgeInsets.all(20),
-        color: Colors.grey.shade800,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: <Widget>[
+      body: SafeArea(
+        child: Container(
+          padding: EdgeInsets.all(20),
+          color: Colors.grey.shade800,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: <Widget>[
             Flexible(
               child: Container(
                 height: MediaQuery.of(context).size.width * 0.60,
@@ -201,6 +202,7 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             )
           ],
+          ),
         ),
       ),
     );

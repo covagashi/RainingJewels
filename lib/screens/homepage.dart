@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:rainingjewels_new/widgets/working_audio_player.dart';
 import 'package:rainingjewels_new/kConstant.dart';
-import 'package:audioplayers/audioplayers.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:screen_brightness/screen_brightness.dart';
 
@@ -18,8 +17,6 @@ class Homepage extends StatefulWidget {
 class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin {
   int _selectedIndex = 0;
   late final Ticker _ticker;
-  static AudioPlayer fixedPlayer = AudioPlayer();
-  bool playState = false;
   bool _isDimmed = false;
   Timer? _dimTimer;
   double _originalBrightness = 1.0;
@@ -27,15 +24,6 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
   @override
   void dispose() async {
     _ticker.dispose();
-
-    // Stop and dispose audio properly
-    try {
-      await fixedPlayer.stop();
-      await fixedPlayer.dispose();
-    } catch (e) {
-      print('Error disposing fixedPlayer: $e');
-    }
-
     _dimTimer?.cancel();
     WakelockPlus.disable();
 
@@ -123,10 +111,11 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
       onPanUpdate: (_) => _restoreBrightness(),
       child: Scaffold(
         backgroundColor: kBlueishDye,
-        body: Stack(
-          alignment: Alignment.center,
-          fit: StackFit.expand,
-          children: <Widget>[
+        body: SafeArea(
+          child: Stack(
+            alignment: Alignment.center,
+            fit: StackFit.expand,
+            children: <Widget>[
             // Fondo blanco y negro
             Container(
               decoration: BoxDecoration(
@@ -171,6 +160,7 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
                 ),
               ),
           ],
+          ),
         ),
       ),
     );
