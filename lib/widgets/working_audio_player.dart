@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:audioplayers/audioplayers.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:audio_service/audio_service.dart';
+import 'package:just_audio/just_audio.dart';
 import '../services/audio_service.dart';
 
 class WorkingAudioPlayer extends StatefulWidget {
@@ -11,7 +9,6 @@ class WorkingAudioPlayer extends StatefulWidget {
 }
 
 class _WorkingAudioPlayerState extends State<WorkingAudioPlayer> {
-  final AudioPlayer _audioPlayer = AudioPlayer();
   final AudioPlayerHandler _audioHandler = AudioPlayerHandler.instance;
   bool _isPlaying = false;
   double _volume = 0.7;
@@ -20,7 +17,7 @@ class _WorkingAudioPlayerState extends State<WorkingAudioPlayer> {
   int _timerMinutes = 0;
   bool _timerActive = false;
   int _remainingSeconds = 0;
-  StreamSubscription<String>? _controlEventSubscription;
+  StreamSubscription<PlayerState>? _playerStateSubscription;
 
   final List<SoundOption> _sounds = [
     SoundOption('Rain', 'rain.mp3', '🌧️', Colors.white),
@@ -31,83 +28,36 @@ class _WorkingAudioPlayerState extends State<WorkingAudioPlayer> {
   @override
   void initState() {
     super.initState();
-    _setupControlEventSubscription();
+    _setupPlayerStateSubscription();
+    _setInitialVolume();
   }
 
-  void _setupControlEventSubscription() {
-    // Cancel existing subscription if any
-    _controlEventSubscription?.cancel();
-
-    // Create new subscription
-    _controlEventSubscription = _audioHandler.controlEvents.listen((event) {
-      print('Widget received control event: $event');
-      _handleControlEvent(event);
-    }, onError: (error) {
-      print('Error in control event stream: $error');
-      // Try to recreate subscription after a short delay
-      Future.delayed(Duration(seconds: 1), () {
-        if (mounted) {
-          _setupControlEventSubscription();
-        }
-      });
+  void _setupPlayerStateSubscription() {
+    // Listen to player state changes to update UI
+    _playerStateSubscription = _audioHandler.playerStateStream.listen((state) {
+      if (mounted) {
+        setState(() {
+          _isPlaying = state.playing;
+        });
+      }
     });
   }
 
-  @override
-  void dispose() async {
-    // Stop audio before disposing
-    if (_isPlaying) {
-      await _audioPlayer.stop();
-      await _audioHandler.stop();
-    }
-
-    // Ensure everything is properly disposed
-    await _audioPlayer.dispose();
-    _sleepTimer?.cancel();
-    _controlEventSubscription?.cancel();
-
-    // Force stop the audio service to prevent background playback
-    try {
-      await _audioHandler.stopAndDispose();
-    } catch (e) {
-      print('Error stopping audio handler in dispose: $e');
-    }
-
-    super.dispose();
+  void _setInitialVolume() async {
+    await _audioHandler.setVolume(_volume);
   }
 
-  void _handleControlEvent(String event) async {
-    switch (event) {
-      case 'play':
-        if (!_isPlaying) {
-          await _audioPlayer.resume();
-          setState(() {
-            _isPlaying = true;
-          });
-        }
-        break;
-      case 'pause':
-        if (_isPlaying) {
-          await _audioPlayer.pause();
-          setState(() {
-            _isPlaying = false;
-          });
-        }
-        break;
-      case 'stop':
-        await _audioPlayer.stop();
-        setState(() {
-          _isPlaying = false;
-        });
-        break;
-    }
+  @override
+  void dispose() {
+    _sleepTimer?.cancel();
+    _playerStateSubscription?.cancel();
+    super.dispose();
   }
 
 
   void _changeSound(int index) async {
     // Si toca el mismo emoji que está seleccionado, toggle play/pause
     if (index == _selectedSound && _isPlaying) {
-      await _audioPlayer.stop();
       await _audioHandler.stop();
       setState(() {
         _isPlaying = false;
@@ -121,45 +71,16 @@ class _WorkingAudioPlayerState extends State<WorkingAudioPlayer> {
 
     // Cambiar sonido y reproducir
     try {
-      // Parar ambos players
-      await _audioPlayer.stop();
-      await _audioHandler.stop();
-
       String assetPath = _sounds[_selectedSound].asset;
       String title = _sounds[_selectedSound].name;
 
       print('Intentando reproducir: $assetPath');
 
-      // Reproducir con AudioPlayer (sonido real)
-      await _audioPlayer.play(AssetSource(assetPath));
-      await _audioPlayer.setReleaseMode(ReleaseMode.loop);
-      await _audioPlayer.setVolume(_volume);
+      // Reproducir con AudioService (maneja todo: audio real + notificación)
+      await _audioHandler.playAudio(assetPath, title);
+      await _audioHandler.setVolume(_volume);
 
       print('Audio iniciado exitosamente');
-
-      // Actualizar AudioService (notificación) - solo en móvil
-      try {
-        await _audioHandler.playAudio(assetPath, title);
-        await _audioHandler.setVolume(_volume);
-
-        // Ensure subscription is working after potential stream recreation
-        if (_controlEventSubscription == null || _controlEventSubscription!.isPaused) {
-          _setupControlEventSubscription();
-        }
-      } catch (serviceError) {
-        print('AudioService error: $serviceError');
-        if (serviceError.toString().contains('Bad state: cannot add new events after calling close')) {
-          // Stream was closed, recreate subscription
-          _setupControlEventSubscription();
-          // Try audio service again
-          try {
-            await _audioHandler.playAudio(assetPath, title);
-            await _audioHandler.setVolume(_volume);
-          } catch (retryError) {
-            print('Retry failed: $retryError');
-          }
-        }
-      }
 
       setState(() {
         _isPlaying = true;
@@ -167,12 +88,14 @@ class _WorkingAudioPlayerState extends State<WorkingAudioPlayer> {
     } catch (e) {
       print('Error changing sound: $e');
       // Mostrar error al usuario
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error al reproducir audio: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al reproducir audio: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -180,7 +103,6 @@ class _WorkingAudioPlayerState extends State<WorkingAudioPlayer> {
     setState(() {
       _volume = value;
     });
-    await _audioPlayer.setVolume(_volume);
     await _audioHandler.setVolume(_volume);
   }
 
@@ -239,15 +161,14 @@ class _WorkingAudioPlayerState extends State<WorkingAudioPlayer> {
   }
 
   void _fadeOutAndStop() async {
+    // Fade out
     for (double vol = _volume; vol >= 0; vol -= 0.05) {
-      await _audioPlayer.setVolume(vol);
       await _audioHandler.setVolume(vol);
       await Future.delayed(Duration(milliseconds: 100));
     }
 
-    await _audioPlayer.stop();
+    // Stop and restore volume
     await _audioHandler.stop();
-    await _audioPlayer.setVolume(_volume);
     await _audioHandler.setVolume(_volume);
 
     setState(() {

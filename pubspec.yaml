@@ -1,7 +1,7 @@
 name: rainingjewels_new
 description: "Basic relaxing sounds for meditation and sleep."
 publish_to: 'none'
-version: 1.0.4+5
+version: 1.0.5+6
 
 environment:
   sdk: '>=3.3.4 <4.0.0'
@@ -11,7 +11,6 @@ dependencies:
     sdk: flutter
 
   # Dependencias de la app
-  audioplayers: ^6.0.0
   flutter_launcher_icons: ^0.13.1
   wakelock_plus: ^1.2.8
   screen_brightness: ^1.0.1

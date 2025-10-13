@@ -10,9 +10,8 @@ class MainActivity : FlutterActivity() {
         super.onCreate(savedInstanceState)
 
         // Enable edge-to-edge display for Android 15+ compatibility
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            WindowCompat.setDecorFitsSystemWindows(window, false)
-        }
+        // Using WindowCompat which is compatible with FlutterActivity
+        WindowCompat.setDecorFitsSystemWindows(window, false)
     }
 
     override fun onDestroy() {

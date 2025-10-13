@@ -33,7 +33,7 @@ android {
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 35  // Updated for Android 15 edge-to-edge support
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
@@ -43,6 +43,11 @@ android {
             signingConfig = signingConfigs.getByName("release")
         }
     }
+}
+
+dependencies {
+    // Required for edge-to-edge support on Android 15+
+    implementation("androidx.core:core-ktx:1.13.1")
 }
 
 flutter {
