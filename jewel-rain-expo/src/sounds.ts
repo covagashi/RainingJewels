@@ -214,6 +214,150 @@ export const MORE_SOUNDS: Sound[] = [
       },
     ],
   },
+  {
+    id: 'village_morning',
+    name: 'Village Morning',
+    icon: '🌅',
+    source: require('../assets/sounds/village_morning.mp3'),
+    attributions: [
+      {
+        sourceName: 'early morning village alem 110417 7am.wav',
+        sourceUrl: 'https://freesound.org/s/170930/',
+        author: 'klankbeeld',
+        authorUrl: 'https://freesound.org/people/klankbeeld/',
+        license: 'CC BY 3.0',
+        licenseUrl: CC_BY_3,
+      },
+    ],
+  },
+  {
+    id: 'creaking_boat',
+    name: 'Creaking Boat',
+    icon: '⛵',
+    source: require('../assets/sounds/creaking_boat.mp3'),
+    attributions: [
+      {
+        sourceName: 'Lake Waves 2.wav',
+        sourceUrl: 'https://freesound.org/s/67884/',
+        author: 'Benboncan',
+        authorUrl: 'https://freesound.org/people/Benboncan/',
+        license: 'CC BY 3.0',
+        licenseUrl: CC_BY_3,
+      },
+    ],
+  },
+  {
+    id: 'heartbeat',
+    name: 'Heartbeat',
+    icon: '💓',
+    source: require('../assets/sounds/heartbeat.mp3'),
+    attributions: [
+      {
+        sourceName: 'Heartbeat_02.wav',
+        sourceUrl: 'https://freesound.org/s/216219/',
+        author: 'RSilveira_88',
+        authorUrl: 'https://freesound.org/people/RSilveira_88/',
+        license: 'CC BY 3.0',
+        licenseUrl: CC_BY_3,
+      },
+    ],
+  },
+  {
+    id: 'wall_clock',
+    name: 'Wall Clock',
+    icon: '🕰️',
+    source: require('../assets/sounds/wall_clock.mp3'),
+    attributions: [
+      {
+        sourceName: 'Wall Clock Ticking.wav',
+        sourceUrl: 'https://freesound.org/s/405423/',
+        author: 'straget',
+        authorUrl: 'https://freesound.org/people/straget/',
+        license: 'CC BY 3.0',
+        licenseUrl: CC_BY_3,
+      },
+    ],
+  },
+  {
+    id: 'office',
+    name: 'Office',
+    icon: '🏢',
+    source: require('../assets/sounds/office.mp3'),
+    attributions: [
+      {
+        sourceName: 'The Office',
+        sourceUrl: 'https://freesound.org/s/211945/',
+        author: 'qubodup',
+        authorUrl: 'https://freesound.org/people/qubodup/',
+        license: 'CC BY 3.0',
+        licenseUrl: CC_BY_3,
+      },
+    ],
+  },
+  {
+    id: 'quiet_conversations',
+    name: 'Chatter',
+    icon: '🗣️',
+    source: require('../assets/sounds/quiet_conversations.mp3'),
+    attributions: [
+      {
+        sourceName: 'Crowd Talking During Interval',
+        sourceUrl: 'https://freesound.org/s/163390/',
+        author: 'blouhond',
+        authorUrl: 'https://freesound.org/people/blouhond/',
+        license: 'CC BY 3.0',
+        licenseUrl: CC_BY_3,
+      },
+    ],
+  },
+  {
+    id: 'air_travel',
+    name: 'Air Travel',
+    icon: '✈️',
+    source: require('../assets/sounds/air_travel.mp3'),
+    attributions: [
+      {
+        sourceName: 'In-flight Ambience - Boeing 737-838',
+        sourceUrl: 'https://freesound.org/s/47254/',
+        author: 'digifishmusic',
+        authorUrl: 'https://freesound.org/people/digifishmusic/',
+        license: 'CC BY 3.0',
+        licenseUrl: CC_BY_3,
+      },
+    ],
+  },
+  {
+    id: 'electric_car',
+    name: 'Car Ride',
+    icon: '🚙',
+    source: require('../assets/sounds/electric_car.mp3'),
+    attributions: [
+      {
+        sourceName: 'hybrid Toyota Yaris drive 190710_0056.flac',
+        sourceUrl: 'https://freesound.org/s/476833/',
+        author: 'klankbeeld',
+        authorUrl: 'https://freesound.org/people/klankbeeld/',
+        license: 'CC BY 3.0',
+        licenseUrl: CC_BY_3,
+      },
+    ],
+  },
+  {
+    id: 'wolves',
+    name: 'Wolves',
+    icon: '🐺',
+    source: require('../assets/sounds/wolves.mp3'),
+    attributions: [
+      {
+        sourceName: 'Wolves howling, small pack, frost snapping',
+        sourceUrl: 'https://freesound.org/s/243495/',
+        author: 'YleArkisto',
+        authorUrl: 'https://freesound.org/people/YleArkisto/',
+        license: 'CC BY 3.0',
+        licenseUrl: CC_BY_3,
+      },
+    ],
+  },
 ];
 
 export const ALL_SOUNDS: Sound[] = [...FEATURED_SOUNDS, ...MORE_SOUNDS];

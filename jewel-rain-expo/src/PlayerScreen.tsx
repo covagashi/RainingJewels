@@ -42,10 +42,19 @@ export default function PlayerScreen() {
   const selectedSound = ALL_SOUNDS[selectedIndex];
 
   useEffect(() => {
+    // doNotMix is required for lock screen controls / sustained background
+    // playback on Android (see expo-audio docs).
     setAudioModeAsync({
       playsInSilentMode: true,
       shouldPlayInBackground: true,
+      interruptionMode: 'doNotMix',
     }).catch(() => {});
+    return () => {
+      try {
+        player.setActiveForLockScreen(false);
+      } catch {}
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // --- Screen dimming -------------------------------------------------
@@ -97,10 +106,19 @@ export default function PlayerScreen() {
     }
 
     setSelectedIndex(index);
-    player.replace(ALL_SOUNDS[index].source);
+    const sound = ALL_SOUNDS[index];
+    player.replace(sound.source);
     player.loop = true;
     player.volume = volume;
     player.play();
+
+    // Media notification / lock screen controls; also required for
+    // sustained background playback on Android.
+    player.setActiveForLockScreen(
+      true,
+      { title: sound.name, artist: 'Jewel Rain', albumTitle: 'Nature Sounds' },
+      { showSeekForward: false, showSeekBackward: false, isLiveStream: true },
+    );
   };
 
   const onVolumeChange = (value: number) => {

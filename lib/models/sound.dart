@@ -210,6 +210,150 @@ const List<Sound> kMoreSounds = [
       ),
     ],
   ),
+  Sound(
+    id: 'village_morning',
+    name: 'Village Morning',
+    asset: 'sounds/village_morning.mp3',
+    icon: '🌅',
+    attributions: [
+      SoundAttribution(
+        sourceName: 'early morning village alem 110417 7am.wav',
+        sourceUrl: 'https://freesound.org/s/170930/',
+        author: 'klankbeeld',
+        authorUrl: 'https://freesound.org/people/klankbeeld/',
+        license: 'CC BY 3.0',
+        licenseUrl: _ccBy3,
+      ),
+    ],
+  ),
+  Sound(
+    id: 'creaking_boat',
+    name: 'Creaking Boat',
+    asset: 'sounds/creaking_boat.mp3',
+    icon: '⛵',
+    attributions: [
+      SoundAttribution(
+        sourceName: 'Lake Waves 2.wav',
+        sourceUrl: 'https://freesound.org/s/67884/',
+        author: 'Benboncan',
+        authorUrl: 'https://freesound.org/people/Benboncan/',
+        license: 'CC BY 3.0',
+        licenseUrl: _ccBy3,
+      ),
+    ],
+  ),
+  Sound(
+    id: 'heartbeat',
+    name: 'Heartbeat',
+    asset: 'sounds/heartbeat.mp3',
+    icon: '💓',
+    attributions: [
+      SoundAttribution(
+        sourceName: 'Heartbeat_02.wav',
+        sourceUrl: 'https://freesound.org/s/216219/',
+        author: 'RSilveira_88',
+        authorUrl: 'https://freesound.org/people/RSilveira_88/',
+        license: 'CC BY 3.0',
+        licenseUrl: _ccBy3,
+      ),
+    ],
+  ),
+  Sound(
+    id: 'wall_clock',
+    name: 'Wall Clock',
+    asset: 'sounds/wall_clock.mp3',
+    icon: '🕰️',
+    attributions: [
+      SoundAttribution(
+        sourceName: 'Wall Clock Ticking.wav',
+        sourceUrl: 'https://freesound.org/s/405423/',
+        author: 'straget',
+        authorUrl: 'https://freesound.org/people/straget/',
+        license: 'CC BY 3.0',
+        licenseUrl: _ccBy3,
+      ),
+    ],
+  ),
+  Sound(
+    id: 'office',
+    name: 'Office',
+    asset: 'sounds/office.mp3',
+    icon: '🏢',
+    attributions: [
+      SoundAttribution(
+        sourceName: 'The Office',
+        sourceUrl: 'https://freesound.org/s/211945/',
+        author: 'qubodup',
+        authorUrl: 'https://freesound.org/people/qubodup/',
+        license: 'CC BY 3.0',
+        licenseUrl: _ccBy3,
+      ),
+    ],
+  ),
+  Sound(
+    id: 'quiet_conversations',
+    name: 'Chatter',
+    asset: 'sounds/quiet_conversations.mp3',
+    icon: '🗣️',
+    attributions: [
+      SoundAttribution(
+        sourceName: 'Crowd Talking During Interval',
+        sourceUrl: 'https://freesound.org/s/163390/',
+        author: 'blouhond',
+        authorUrl: 'https://freesound.org/people/blouhond/',
+        license: 'CC BY 3.0',
+        licenseUrl: _ccBy3,
+      ),
+    ],
+  ),
+  Sound(
+    id: 'air_travel',
+    name: 'Air Travel',
+    asset: 'sounds/air_travel.mp3',
+    icon: '✈️',
+    attributions: [
+      SoundAttribution(
+        sourceName: 'In-flight Ambience - Boeing 737-838',
+        sourceUrl: 'https://freesound.org/s/47254/',
+        author: 'digifishmusic',
+        authorUrl: 'https://freesound.org/people/digifishmusic/',
+        license: 'CC BY 3.0',
+        licenseUrl: _ccBy3,
+      ),
+    ],
+  ),
+  Sound(
+    id: 'electric_car',
+    name: 'Car Ride',
+    asset: 'sounds/electric_car.mp3',
+    icon: '🚙',
+    attributions: [
+      SoundAttribution(
+        sourceName: 'hybrid Toyota Yaris drive 190710_0056.flac',
+        sourceUrl: 'https://freesound.org/s/476833/',
+        author: 'klankbeeld',
+        authorUrl: 'https://freesound.org/people/klankbeeld/',
+        license: 'CC BY 3.0',
+        licenseUrl: _ccBy3,
+      ),
+    ],
+  ),
+  Sound(
+    id: 'wolves',
+    name: 'Wolves',
+    asset: 'sounds/wolves.mp3',
+    icon: '🐺',
+    attributions: [
+      SoundAttribution(
+        sourceName: 'Wolves howling, small pack, frost snapping',
+        sourceUrl: 'https://freesound.org/s/243495/',
+        author: 'YleArkisto',
+        authorUrl: 'https://freesound.org/people/YleArkisto/',
+        license: 'CC BY 3.0',
+        licenseUrl: _ccBy3,
+      ),
+    ],
+  ),
 ];
 
 /// Full catalog: featured sounds first, then the extra ones.
