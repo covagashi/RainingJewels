@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:rainingjewels_new/theme.dart';
 import 'package:rainingjewels_new/widgets/sound_player.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:screen_brightness/screen_brightness.dart';
@@ -76,17 +77,7 @@ class _HomepageState extends State<Homepage> {
             fit: StackFit.expand,
             children: <Widget>[
               Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.black,
-                      Colors.grey.shade900,
-                      Colors.black,
-                    ],
-                  ),
-                ),
+                decoration: const BoxDecoration(gradient: kBackgroundGradient),
               ),
               const SoundPlayer(),
               if (_isDimmed)

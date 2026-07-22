@@ -2,12 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/sound.dart';
+import '../theme.dart';
 
 /// Shows the CC-BY attributions required for the bundled sounds.
 void showSoundCreditsSheet(BuildContext context) {
   showModalBottomSheet<void>(
     context: context,
-    backgroundColor: Colors.grey.shade900,
+    backgroundColor: kBgMid,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+    ),
     isScrollControlled: true,
     builder: (context) => DraggableScrollableSheet(
       expand: false,
@@ -88,10 +92,10 @@ class _LinkText extends StatelessWidget {
       child: Text(
         text,
         style: const TextStyle(
-          color: Colors.lightBlueAccent,
+          color: kAccent,
           fontSize: 12,
           decoration: TextDecoration.underline,
-          decorationColor: Colors.lightBlueAccent,
+          decorationColor: kAccent,
         ),
       ),
     );
