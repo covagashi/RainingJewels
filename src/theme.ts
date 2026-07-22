@@ -19,6 +19,16 @@ export const SELECTED_BORDER = 'rgba(255,255,255,0.7)';
 
 export const TEXT_PRIMARY = '#ffffff';
 export const TEXT_SECONDARY = 'rgba(255,255,255,0.7)';
-export const TEXT_TERTIARY = 'rgba(255,255,255,0.38)';
+export const TEXT_TERTIARY = 'rgba(255,255,255,0.55)';
 
 export const BACKGROUND_GRADIENT = [BG_TOP, BG_BOTTOM] as const;
+
+/**
+ * Display typeface (Manrope, loaded in App.tsx via @expo-google-fonts/manrope).
+ * Used for titles and headings only; body copy stays on the system font.
+ */
+export const FONT_DISPLAY_LIGHT = 'Manrope_300Light';
+export const FONT_DISPLAY_REGULAR = 'Manrope_400Regular';
+export const FONT_DISPLAY_MEDIUM = 'Manrope_500Medium';
+export const FONT_DISPLAY_SEMIBOLD = 'Manrope_600SemiBold';
+export const FONT_DISPLAY_BOLD = 'Manrope_700Bold';

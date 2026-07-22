@@ -34,11 +34,22 @@
       [
         "expo-audio",
         {
-          "recordAudioAndroid": false
+          "recordAudioAndroid": false,
+          "enableBackgroundPlayback": true
         }
       ],
       "expo-brightness",
-      "expo-asset"
+      "expo-asset",
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 220,
+          "resizeMode": "contain",
+          "backgroundColor": "#0D0F14"
+        }
+      ]
     ]
   }
 }

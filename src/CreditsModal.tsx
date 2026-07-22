@@ -9,8 +9,9 @@ import {
   View,
 } from 'react-native';
 
+import { getSoundIcon } from './icons';
 import { ALL_SOUNDS } from './sounds';
-import { ACCENT, BG_SHEET } from './theme';
+import { ACCENT, BG_SHEET, FONT_DISPLAY_SEMIBOLD } from './theme';
 
 interface Props {
   visible: boolean;
@@ -19,7 +20,7 @@ interface Props {
 
 function Link({ text, url }: { text: string; url: string }) {
   return (
-    <Text style={styles.link} onPress={() => Linking.openURL(url)}>
+    <Text style={styles.link} onPress={() => Linking.openURL(url)} accessibilityRole="link">
       {text}
     </Text>
   );
@@ -45,28 +46,37 @@ export default function CreditsModal({ visible, onClose }: Props) {
             </Text>
             <Link text="github.com/trynoice" url="https://github.com/trynoice" />
 
-            {creditedSounds.map((sound) => (
-              <View key={sound.id} style={styles.soundBlock}>
-                <Text style={styles.soundName}>
-                  {sound.icon}  {sound.name}
-                </Text>
-                {sound.attributions.map((a, i) => (
-                  <Text key={i} style={styles.attribution}>
-                    <Link text={a.sourceName} url={a.sourceUrl} />
-                    <Text style={styles.dim}> by </Text>
-                    <Link text={a.author} url={a.authorUrl} />
-                    <Text style={styles.dim}> · </Text>
-                    <Link text={a.license} url={a.licenseUrl} />
-                  </Text>
-                ))}
-              </View>
-            ))}
+            {creditedSounds.map((sound) => {
+              const Icon = getSoundIcon(sound.id);
+              return (
+                <View key={sound.id} style={styles.soundBlock}>
+                  <View style={styles.soundNameRow}>
+                    <Icon size={16} color="rgba(255,255,255,0.7)" strokeWidth={1.75} />
+                    <Text style={styles.soundName}>{sound.name}</Text>
+                  </View>
+                  {sound.attributions.map((a, i) => (
+                    <Text key={i} style={styles.attribution}>
+                      <Link text={a.sourceName} url={a.sourceUrl} />
+                      <Text style={styles.dim}> by </Text>
+                      <Link text={a.author} url={a.authorUrl} />
+                      <Text style={styles.dim}> · </Text>
+                      <Link text={a.license} url={a.licenseUrl} />
+                    </Text>
+                  ))}
+                </View>
+              );
+            })}
 
             <Text style={styles.contact}>
               Contact: hello@covaga.xyz — Subject: Raining Jewels - FAQ
             </Text>
           </ScrollView>
-          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={onClose}
+            accessibilityRole="button"
+            accessibilityLabel="Close credits"
+          >
             <Text style={styles.closeText}>Close</Text>
           </TouchableOpacity>
         </View>
@@ -93,22 +103,26 @@ const styles = StyleSheet.create({
   title: {
     color: '#fff',
     fontSize: 22,
-    fontWeight: '600',
+    fontFamily: FONT_DISPLAY_SEMIBOLD,
     marginBottom: 8,
   },
   intro: {
-    color: 'rgba(255,255,255,0.55)',
+    color: 'rgba(255,255,255,0.72)',
     fontSize: 13,
     marginBottom: 4,
   },
   soundBlock: {
     marginTop: 16,
   },
+  soundNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   soundName: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '500',
-    marginBottom: 4,
   },
   attribution: {
     marginLeft: 12,
@@ -116,19 +130,20 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   dim: {
-    color: 'rgba(255,255,255,0.55)',
+    color: 'rgba(255,255,255,0.72)',
   },
   link: {
     color: ACCENT,
     textDecorationLine: 'underline',
-    fontSize: 12,
+    fontSize: 13,
   },
   contact: {
-    color: 'rgba(255,255,255,0.55)',
+    color: 'rgba(255,255,255,0.72)',
     fontSize: 12,
     marginTop: 24,
   },
   closeButton: {
+    minHeight: 48,
     padding: 16,
     alignItems: 'center',
     borderTopWidth: StyleSheet.hairlineWidth,

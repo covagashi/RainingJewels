@@ -1,24 +1,48 @@
 import Slider from '@react-native-community/slider';
 import * as Brightness from 'expo-brightness';
 import { setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
+import * as Haptics from 'expo-haptics';
 import { useKeepAwake } from 'expo-keep-awake';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Moon, Pause, Play, Volume1, Volume2 } from 'lucide-react-native';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  AccessibilityState,
   Pressable,
   ScrollView,
+  StyleProp,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
+  ViewStyle,
 } from 'react-native';
+import Animated, {
+  cancelAnimation,
+  Easing,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withDelay,
+  withRepeat,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 
 import CreditsModal from './CreditsModal';
+import { getSoundIcon } from './icons';
 import { ALL_SOUNDS, FEATURED_SOUNDS, MORE_SOUNDS, Sound } from './sounds';
 import {
+  getLastSoundId,
+  getVolume as getStoredVolume,
+  setLastSoundId,
+  setVolume as setStoredVolume,
+} from './storage';
+import {
   ACCENT,
-  ACCENT_SOFT,
   BACKGROUND_GRADIENT,
+  FONT_DISPLAY_LIGHT,
+  FONT_DISPLAY_SEMIBOLD,
   GLASS_BORDER,
   GLASS_FILL,
   SELECTED_BORDER,
@@ -31,16 +55,157 @@ import {
 const DIM_AFTER_MS = 2 * 60 * 1000;
 const DIMMED_BRIGHTNESS = 0.1;
 const TIMER_OPTIONS = [0, 15, 30, 60];
+const RAIN_DROP_COUNT = 14;
+const PRESS_SPRING = { damping: 18, stiffness: 320 };
+
+// --- Press feedback wrapper ---------------------------------------------
+
+interface PressableScaleProps {
+  onPress: () => void;
+  style?: StyleProp<ViewStyle>;
+  children: React.ReactNode;
+  accessibilityLabel?: string;
+  accessibilityState?: AccessibilityState;
+}
+
+function PressableScale({
+  onPress,
+  style,
+  children,
+  accessibilityLabel,
+  accessibilityState,
+}: PressableScaleProps) {
+  const scale = useSharedValue(1);
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+  return (
+    <Animated.View style={animatedStyle}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel}
+        accessibilityState={accessibilityState}
+        onPressIn={() => {
+          scale.value = withSpring(0.96, PRESS_SPRING);
+        }}
+        onPressOut={() => {
+          scale.value = withSpring(1, PRESS_SPRING);
+        }}
+        onPress={onPress}
+        style={style}
+      >
+        {children}
+      </Pressable>
+    </Animated.View>
+  );
+}
+
+// --- Ambient rain layer -------------------------------------------------
+
+interface DropConfig {
+  xFrac: number;
+  height: number;
+  opacity: number;
+  duration: number;
+  delay: number;
+}
+
+function RainDrop({
+  config,
+  playing,
+  left,
+  travel,
+}: {
+  config: DropConfig;
+  playing: boolean;
+  left: number;
+  travel: number;
+}) {
+  const progress = useSharedValue(0);
+
+  useEffect(() => {
+    if (playing) {
+      progress.value = 0;
+      progress.value = withDelay(
+        config.delay,
+        withRepeat(
+          withTiming(1, { duration: config.duration, easing: Easing.linear }),
+          -1,
+          false,
+        ),
+      );
+    } else {
+      cancelAnimation(progress);
+    }
+  }, [playing, config, progress]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      {
+        translateY:
+          -config.height + progress.value * (travel + config.height * 2),
+      },
+    ],
+  }));
+
+  return (
+    <Animated.View
+      style={[
+        styles.rainDrop,
+        { left, height: config.height, opacity: config.opacity },
+        animatedStyle,
+      ]}
+    />
+  );
+}
+
+function RainLayer({
+  playing,
+  drops,
+}: {
+  playing: boolean;
+  drops: DropConfig[];
+}) {
+  const [layout, setLayout] = useState({ width: 0, height: 0 });
+  const layerStyle = useAnimatedStyle(() => ({
+    opacity: withTiming(playing ? 1 : 0, { duration: 400 }),
+  }));
+  return (
+    <Animated.View
+      style={[StyleSheet.absoluteFill, styles.rainLayer, layerStyle]}
+      onLayout={(e) => {
+        const { width, height } = e.nativeEvent.layout;
+        setLayout({ width, height });
+      }}
+    >
+      {layout.height > 0 &&
+        drops.map((config, i) => (
+          <RainDrop
+            key={i}
+            config={config}
+            playing={playing}
+            left={config.xFrac * layout.width}
+            travel={layout.height}
+          />
+        ))}
+    </Animated.View>
+  );
+}
 
 export default function PlayerScreen() {
   useKeepAwake();
 
   const player = useAudioPlayer();
   const status = useAudioPlayerStatus(player);
+  const reducedMotion = useReducedMotion();
 
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [volume, setVolume] = useState(0.7);
   const [creditsVisible, setCreditsVisible] = useState(false);
+
+  // Id of the sound currently loaded into the player (so play after pause
+  // resumes instead of restarting via replace).
+  const loadedSoundIdRef = useRef<string | null>(null);
 
   // Sleep timer
   const [timerMinutes, setTimerMinutes] = useState(0);
@@ -54,6 +219,19 @@ export default function PlayerScreen() {
 
   const selectedSound = ALL_SOUNDS[selectedIndex];
 
+  // Ambient rain drop configs, generated once per mount.
+  const drops = useMemo<DropConfig[]>(
+    () =>
+      Array.from({ length: RAIN_DROP_COUNT }, () => ({
+        xFrac: 0.04 + Math.random() * 0.92,
+        height: 12 + Math.random() * 6,
+        opacity: 0.05 + Math.random() * 0.07,
+        duration: 2200 + Math.random() * 2000,
+        delay: Math.random() * 2600,
+      })),
+    [],
+  );
+
   useEffect(() => {
     // doNotMix is required for lock screen controls / sustained background
     // playback on Android (see expo-audio docs).
@@ -66,6 +244,30 @@ export default function PlayerScreen() {
       try {
         player.setActiveForLockScreen(false);
       } catch {}
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Restore persisted volume + last selected sound (no auto-play).
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const [storedVolume, lastId] = await Promise.all([
+        getStoredVolume(),
+        getLastSoundId(),
+      ]);
+      if (cancelled) return;
+      if (storedVolume != null) {
+        setVolume(storedVolume);
+        player.volume = storedVolume;
+      }
+      if (lastId != null) {
+        const index = ALL_SOUNDS.findIndex((s) => s.id === lastId);
+        if (index >= 0) setSelectedIndex(index);
+      }
+    })();
+    return () => {
+      cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -109,21 +311,13 @@ export default function PlayerScreen() {
 
   // --- Playback -------------------------------------------------------
 
-  const onSoundTap = (index: number) => {
-    wake();
-
-    // Tapping the selected sound while playing toggles it off.
-    if (index === selectedIndex && status.playing) {
-      player.pause();
-      return;
-    }
-
-    setSelectedIndex(index);
+  const startSound = (index: number) => {
     const sound = ALL_SOUNDS[index];
     player.replace(sound.source);
     player.loop = true;
     player.volume = volume;
     player.play();
+    loadedSoundIdRef.current = sound.id;
 
     // Media notification / lock screen controls; also required for
     // sustained background playback on Android.
@@ -132,6 +326,43 @@ export default function PlayerScreen() {
       { title: sound.name, artist: 'Jewel Rain', albumTitle: 'Nature Sounds' },
       { showSeekForward: false, showSeekBackward: false, isLiveStream: true },
     );
+  };
+
+  const onSoundTap = (index: number) => {
+    wake();
+    Haptics.selectionAsync();
+
+    // Tapping the selected sound toggles play/pause (resume, not restart).
+    if (index === selectedIndex) {
+      if (status.playing) {
+        player.pause();
+        return;
+      }
+      if (loadedSoundIdRef.current === ALL_SOUNDS[index].id) {
+        player.play();
+        return;
+      }
+      startSound(index);
+      return;
+    }
+
+    setSelectedIndex(index);
+    setLastSoundId(ALL_SOUNDS[index].id);
+    startSound(index);
+  };
+
+  const togglePlayPause = () => {
+    wake();
+    Haptics.selectionAsync();
+    if (status.playing) {
+      player.pause();
+      return;
+    }
+    if (loadedSoundIdRef.current === selectedSound.id) {
+      player.play();
+      return;
+    }
+    startSound(selectedIndex);
   };
 
   const onVolumeChange = (value: number) => {
@@ -154,6 +385,7 @@ export default function PlayerScreen() {
 
   const setSleepTimer = (minutes: number) => {
     wake();
+    Haptics.selectionAsync();
     if (countdownRef.current) clearInterval(countdownRef.current);
 
     setTimerMinutes(minutes);
@@ -187,10 +419,18 @@ export default function PlayerScreen() {
     showLabel: boolean,
   ) => {
     const isSelected = index === selectedIndex;
+    const Icon = getSoundIcon(sound.id);
+    const iconColor = isSelected
+      ? status.playing
+        ? ACCENT
+        : TEXT_PRIMARY
+      : TEXT_SECONDARY;
     return (
       <View key={sound.id} style={styles.tileWrap}>
-        <TouchableOpacity
+        <PressableScale
           onPress={() => onSoundTap(index)}
+          accessibilityLabel={sound.name}
+          accessibilityState={{ selected: isSelected }}
           style={[
             styles.tile,
             {
@@ -203,8 +443,12 @@ export default function PlayerScreen() {
             },
           ]}
         >
-          <Text style={{ fontSize: size * 0.38 }}>{sound.icon}</Text>
-        </TouchableOpacity>
+          <Icon
+            size={Math.round(size * 0.36)}
+            color={iconColor}
+            strokeWidth={1.75}
+          />
+        </PressableScale>
         {showLabel && (
           <Text
             style={[
@@ -230,6 +474,8 @@ export default function PlayerScreen() {
           </View>
           <TouchableOpacity
             style={styles.infoButton}
+            accessibilityRole="button"
+            accessibilityLabel="Sound credits"
             onPress={() => {
               wake();
               setCreditsVisible(true);
@@ -246,45 +492,68 @@ export default function PlayerScreen() {
 
         {/* More sounds */}
         <Text style={styles.sectionTitle}>MORE SOUNDS</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.moreSoundsScroll}
-          contentContainerStyle={styles.moreSoundsContent}
-        >
-          {MORE_SOUNDS.map((sound, i) =>
-            renderTile(sound, FEATURED_SOUNDS.length + i, 68, true),
-          )}
-        </ScrollView>
+        <View style={styles.moreSoundsWrap}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.moreSoundsScroll}
+            contentContainerStyle={styles.moreSoundsContent}
+          >
+            {MORE_SOUNDS.map((sound, i) =>
+              renderTile(sound, FEATURED_SOUNDS.length + i, 68, true),
+            )}
+          </ScrollView>
+          <LinearGradient
+            colors={['rgba(9,11,15,0)', 'rgba(9,11,15,0.9)']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.scrollFade}
+            pointerEvents="none"
+          />
+        </View>
 
-        {/* Selected sound title + play state */}
-        <View style={styles.titleContainer}>
+        {/* Now playing */}
+        <View style={styles.centerZone}>
+          {!reducedMotion && (
+            <RainLayer playing={status.playing} drops={drops} />
+          )}
           <Text style={styles.soundTitle}>{selectedSound.name}</Text>
-          <View
+          <PressableScale
+            onPress={togglePlayPause}
+            accessibilityLabel={status.playing ? 'Pause' : 'Play'}
             style={[
-              styles.playChip,
-              {
-                backgroundColor: status.playing ? ACCENT_SOFT : GLASS_FILL,
-                borderColor: status.playing ? ACCENT : GLASS_BORDER,
-                opacity: status.playing ? 1 : 0.5,
-              },
+              styles.playButton,
+              status.playing && styles.playButtonActive,
             ]}
           >
-            <Text
-              style={[
-                styles.playChipText,
-                { color: status.playing ? ACCENT : TEXT_TERTIARY },
-              ]}
-            >
-              {status.playing ? '♫ Playing' : '❚❚ Paused'}
-            </Text>
-          </View>
+            {status.playing ? (
+              <Pause size={30} color={ACCENT} strokeWidth={1.75} />
+            ) : (
+              <Play
+                size={30}
+                color={TEXT_PRIMARY}
+                strokeWidth={1.75}
+                style={styles.playIconNudge}
+              />
+            )}
+          </PressableScale>
+          <Text
+            style={[
+              styles.statusText,
+              { color: status.playing ? ACCENT : TEXT_TERTIARY },
+            ]}
+          >
+            {status.playing ? 'Playing' : 'Paused'}
+          </Text>
         </View>
 
         {/* Controls */}
         <View style={styles.controls}>
           <View style={styles.timerHeader}>
-            <Text style={styles.controlLabel}>🌙 Sleep Timer</Text>
+            <View style={styles.timerLabelRow}>
+              <Moon size={14} color={TEXT_SECONDARY} strokeWidth={1.75} />
+              <Text style={styles.controlLabel}>Sleep Timer</Text>
+            </View>
             {timerMinutes > 0 && (
               <Text style={styles.timerValue}>{formatTimer()}</Text>
             )}
@@ -296,6 +565,13 @@ export default function PlayerScreen() {
                 <TouchableOpacity
                   key={minutes}
                   onPress={() => setSleepTimer(minutes)}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    minutes === 0
+                      ? 'Sleep timer off'
+                      : `Sleep timer ${minutes} minutes`
+                  }
+                  accessibilityState={{ selected: isSelected }}
                   style={[
                     styles.timerChip,
                     {
@@ -320,25 +596,27 @@ export default function PlayerScreen() {
             })}
           </View>
           <View style={styles.volumeRow}>
-            <Text style={styles.volumeIcon}>🔉</Text>
+            <Volume1 size={16} color={TEXT_TERTIARY} strokeWidth={1.75} />
             <Slider
               style={styles.slider}
               value={volume}
               onValueChange={onVolumeChange}
+              onSlidingComplete={(value) => setStoredVolume(value)}
               minimumValue={0}
               maximumValue={1}
               minimumTrackTintColor={ACCENT}
               maximumTrackTintColor={GLASS_BORDER}
               thumbTintColor="#ffffff"
+              accessibilityLabel="Volume"
             />
-            <Text style={styles.volumeIcon}>🔊</Text>
+            <Volume2 size={16} color={TEXT_TERTIARY} strokeWidth={1.75} />
           </View>
         </View>
 
         {/* Dim overlay */}
         {isDimmed && (
           <Pressable style={styles.dimOverlay} onPress={wake}>
-            <Text style={styles.dimIcon}>🌙</Text>
+            <Moon size={36} color={TEXT_TERTIARY} strokeWidth={1.5} />
             <Text style={styles.dimText}>Tap to wake</Text>
           </Pressable>
         )}
@@ -364,8 +642,8 @@ const styles = StyleSheet.create({
   },
   appTitle: {
     color: TEXT_PRIMARY,
+    fontFamily: FONT_DISPLAY_SEMIBOLD,
     fontSize: 22,
-    fontWeight: '600',
     letterSpacing: 0.3,
   },
   appSubtitle: {
@@ -414,6 +692,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingHorizontal: 28,
   },
+  moreSoundsWrap: {
+    flexGrow: 0,
+  },
   moreSoundsScroll: {
     flexGrow: 0,
   },
@@ -421,27 +702,62 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     gap: 12,
   },
-  titleContainer: {
+  scrollFade: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    right: 0,
+    width: 40,
+  },
+  centerZone: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  rainLayer: {
+    overflow: 'hidden',
+    pointerEvents: 'none',
+  },
+  rainDrop: {
+    position: 'absolute',
+    top: 0,
+    width: 2,
+    borderRadius: 1,
+    backgroundColor: '#ffffff',
   },
   soundTitle: {
     color: TEXT_PRIMARY,
+    fontFamily: FONT_DISPLAY_LIGHT,
     fontSize: 30,
-    fontWeight: '300',
     letterSpacing: 0.5,
   },
-  playChip: {
-    marginTop: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 20,
+  playButton: {
+    marginTop: 26,
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    backgroundColor: GLASS_FILL,
     borderWidth: 1,
+    borderColor: GLASS_BORDER,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  playChipText: {
+  playButtonActive: {
+    borderColor: ACCENT,
+    shadowColor: ACCENT,
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 10,
+  },
+  playIconNudge: {
+    marginLeft: 2,
+  },
+  statusText: {
+    marginTop: 12,
     fontSize: 12,
-    fontWeight: '500',
+    letterSpacing: 0.5,
   },
   controls: {
     marginHorizontal: 24,
@@ -456,6 +772,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  timerLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   controlLabel: {
     color: TEXT_SECONDARY,
@@ -483,9 +804,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 18,
   },
-  volumeIcon: {
-    fontSize: 14,
-  },
   slider: {
     flex: 1,
     marginHorizontal: 8,
@@ -499,10 +817,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.7)',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  dimIcon: {
-    fontSize: 36,
-    opacity: 0.6,
   },
   dimText: {
     color: TEXT_TERTIARY,
