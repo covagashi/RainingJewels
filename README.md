@@ -1,65 +1,68 @@
-# Jewel Rain (Raining Jewels)
+# Jewel Rain
 
-Relaxing ambient sounds for meditation and sleep.
+Relaxing ambient sounds for meditation and sleep. Built with Expo /
+React Native (TypeScript).
 
-This repository contains two implementations:
-
-| Directory | Stack | Status |
-|---|---|---|
-| repo root (`lib/`, `android/`, …) | Flutter | Production app published on Google Play (`com.covaga.jewelrain`) |
-| `jewel-rain-expo/` | Expo / React Native | New port, intended to replace the Flutter app over time |
+Jewel Rain is free software, licensed under the
+[GPL-3.0](https://www.gnu.org/licenses/gpl-3.0.html) (see `LICENSE`).
 
 ## Features
 
-- 21 looping ambient sounds: Rain, Thunder, Wind, plus a **More sounds**
-  section with Birds, Seashore, Night, Coffee Shop, Purring Cat, Fan, Train,
-  Palm Wind, Village Morning, Creaking Boat, Heartbeat, Wall Clock, Office,
-  Chatter, Air Travel, Car Ride and Wolves
+- 31 looping ambient sounds: Rain, Thunder and Wind featured, plus a
+  **More sounds** section (Birds, Seashore, Night, Coffee Shop, Purring Cat,
+  Fan, Train, Palm Wind, Village Morning, Creaking Boat, Heartbeat,
+  Wall Clock, Office, Chatter, Air Travel, Car Ride, Wolves, Campfire,
+  Crickets, Stream, Soft Wind, Wind Chimes, Snow Walk, Library, Scuba,
+  White/Pink/Brown Noise)
+- All sounds bundled — works fully offline
 - Background playback with media notification / lock screen controls
+  (`expo-audio` `setActiveForLockScreen`)
 - Sleep timer with fade-out (15/30/60 min)
 - Automatic screen dimming after 2 minutes
 - In-app sound credits screen
 
-## Flutter app (production)
-
-Requires Flutter 3.24+ (Dart 3.5+). Targets Android 16 (API 36), as required
-by Google Play from Aug 31, 2026.
+## Development
 
 ```bash
-flutter pub get
-flutter analyze
-flutter test
-flutter build appbundle --release
-```
-
-Release signing expects `android/app/upload-keystore.jks` (not committed).
-
-## Expo app (port)
-
-Lives in `jewel-rain-expo/`. Built with the Expo SDK (TypeScript), using
-`expo-audio` for playback, `expo-keep-awake` and `expo-brightness`.
-
-```bash
-cd jewel-rain-expo
 npm install
-npx expo start        # develop with Expo Go / dev client
+npx expo start          # develop with Expo Go / dev client
+npx expo run:android    # full dev build (needed for background audio)
 ```
 
 Notes:
 
-- Background playback and the media notification / lock screen controls use
-  `expo-audio` (`shouldPlayInBackground` + `setActiveForLockScreen`). On
-  Android this relies on a native foreground service added by the expo-audio
-  config plugin, so it needs a **development build** (`npx expo run:android`)
-  or EAS build — in Expo Go, background playback stops after ~3 minutes.
-- Android builds via `npx expo run:android` or EAS (`eas build -p android`).
+- Background playback and the media notification rely on a native foreground
+  service added by the expo-audio config plugin, so they need a
+  **development build** (`npx expo run:android`) or an EAS build — in
+  Expo Go, background playback stops after ~3 minutes.
+- Expo SDK 57 targets **Android 16 (API 36)** by default, meeting the
+  Google Play target-API requirement effective Aug 31, 2026.
+
+## Releasing to Google Play
+
+The app id is `com.covaga.jewelrain` (set in `app.json`) — the same as the
+existing Play listing, so releases from this project update the same app.
+Build with EAS:
+
+```bash
+npx eas build -p android
+```
+
+Important: to keep updating the existing listing you must sign with the same
+upload key as before (`upload-keystore.jks` from the old Flutter project).
+Configure it in EAS with `npx eas credentials` instead of letting EAS
+generate a new keystore.
+
+Because the app is GPL-3.0, keep this repository public (or otherwise offer
+the source) and keep the license notice in the app's credits screen.
 
 ## Sound credits
 
-The additional sounds are sourced from the open-source
-[Noice sound library](https://github.com/trynoice) ([trynoice.com](https://trynoice.com)),
-which curates recordings shared under Creative Commons licenses and edits
-them into seamless loops. Attributions (also shown in-app):
+The sounds are sourced from the open-source
+[Noice sound library](https://github.com/trynoice) ([trynoice.com](https://trynoice.com)).
+Some are Creative Commons recordings shared by their original authors and
+edited into seamless loops by the Noice project; others are Noice's own
+recordings, licensed under GPL-3.0. Attributions (also shown in-app):
 
 | Sound | Source | Author | License |
 |---|---|---|---|
@@ -82,11 +85,8 @@ them into seamless loops. Attributions (also shown in-app):
 | Air Travel | [In-flight Ambience - Boeing 737-838](https://freesound.org/s/47254/) | [digifishmusic](https://freesound.org/people/digifishmusic/) | CC BY 3.0 |
 | Car Ride | [hybrid Toyota Yaris drive](https://freesound.org/s/476833/) | [klankbeeld](https://freesound.org/people/klankbeeld/) | CC BY 3.0 |
 | Wolves | [Wolves howling, small pack](https://freesound.org/s/243495/) | [YleArkisto](https://freesound.org/people/YleArkisto/) | CC BY 3.0 |
-
-The remaining Noice sounds (campfire, crickets, white/pink/brownian noise,
-water stream, soft wind, wind chimes, walking in snow, public library,
-scuba diving) are not bundled because their audio has no clearly licensed
-public source in the library manifest.
+| Campfire, Crickets, Stream, Soft Wind, Wind Chimes, Snow Walk, Library, Scuba, White/Pink/Brown Noise | [Noice sound library](https://github.com/trynoice) | Noice | GPL-3.0 |
 
 Licenses: [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) ·
-[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) ·
+[GPL-3.0](https://www.gnu.org/licenses/gpl-3.0.html)
