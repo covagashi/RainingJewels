@@ -1,7 +1,7 @@
 name: rainingjewels_new
 description: "Basic relaxing sounds for meditation and sleep."
 publish_to: 'none'
-version: 1.0.5+6
+version: 1.0.6+7
 
 environment:
   sdk: '>=3.3.4 <4.0.0'
