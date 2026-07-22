@@ -6,10 +6,13 @@
     <!-- Permiso para notificaciones (Android 13+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- Predictive back is on by default when targeting Android 16 (API 36);
+         declared explicitly so behavior is consistent on Android 13-15 devices too -->
     <application
         android:label="Jewel Rain"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:enableOnBackInvokedCallback="true">
         <activity
             android:name="com.ryanheise.audioservice.AudioServiceActivity"
             android:exported="true"

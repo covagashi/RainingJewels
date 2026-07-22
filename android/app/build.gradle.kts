@@ -7,7 +7,8 @@ plugins {
 
 android {
     namespace = "com.covaga.jewelrain"
-    compileSdk = flutter.compileSdkVersion
+    // Compile against Android 16 (API 36) — required by Google Play from Aug 31, 2026
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -33,7 +34,7 @@ android {
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
-        targetSdk = 35  // Updated for Android 15 edge-to-edge support
+        targetSdk = 36  // Android 16 — Google Play target API requirement (Aug 2026)
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
@@ -47,7 +48,7 @@ android {
 
 dependencies {
     // Required for edge-to-edge support on Android 15+
-    implementation("androidx.core:core-ktx:1.13.1")
+    implementation("androidx.core:core-ktx:1.16.0")
 }
 
 flutter {
