@@ -4,6 +4,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:rainingjewels_new/screens/homepage.dart';
 import 'package:rainingjewels_new/services/audio_service.dart';
 import 'package:rainingjewels_new/services/review_service.dart';
+import 'package:rainingjewels_new/theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -113,10 +114,10 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue,
+          seedColor: kAccent,
           brightness: Brightness.dark,
         ),
-        scaffoldBackgroundColor: Colors.black,
+        scaffoldBackgroundColor: kBgBottom,
       ),
       home: const WelcomePage(),
       routes: {
@@ -132,61 +133,74 @@ class WelcomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          color: Colors.grey.shade800,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
-              Flexible(
-                child: SizedBox(
-                  height: MediaQuery.of(context).size.width * 0.60,
-                  child: Hero(
-                    tag: 'picto',
-                    child: Image.asset('assets/picto.png'),
+      body: Container(
+        decoration: const BoxDecoration(gradient: kBackgroundGradient),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                Flexible(
+                  child: SizedBox(
+                    height: MediaQuery.of(context).size.width * 0.55,
+                    child: Hero(
+                      tag: 'picto',
+                      child: Image.asset('assets/picto.png'),
+                    ),
                   ),
                 ),
-              ),
-              const Center(
-                child: Text.rich(
+                const SizedBox(height: 28),
+                const Text.rich(
                   TextSpan(
                     children: [
                       TextSpan(
                         text: "Relaxing",
-                        style: TextStyle(color: Colors.white, fontSize: 40.0),
+                        style: TextStyle(
+                          color: kTextPrimary,
+                          fontSize: 38.0,
+                          fontWeight: FontWeight.w300,
+                        ),
                       ),
                       TextSpan(
                         text: "Rain.",
                         style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 40.0,
+                          color: kTextPrimary,
+                          fontSize: 38.0,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              InkWell(
-                onTap: () {
-                  Navigator.of(context).pushNamed(Homepage.routeName);
-                },
-                child: Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.white, width: 3),
-                    borderRadius: const BorderRadius.all(Radius.circular(30)),
+                const SizedBox(height: 8),
+                const Text(
+                  'Ambient sounds for sleep and focus',
+                  style: TextStyle(color: kTextTertiary, fontSize: 14),
+                ),
+                const SizedBox(height: 32),
+                OutlinedButton(
+                  onPressed: () {
+                    Navigator.of(context).pushNamed(Homepage.routeName);
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Colors.white, width: 2),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 40, vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
                   ),
-                  padding: const EdgeInsets.all(15),
                   child: const Text(
                     "I want to relax",
-                    style: TextStyle(fontSize: 20, color: Colors.white),
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

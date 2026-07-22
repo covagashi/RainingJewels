@@ -2,6 +2,7 @@ import Slider from '@react-native-community/slider';
 import * as Brightness from 'expo-brightness';
 import { setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { useKeepAwake } from 'expo-keep-awake';
+import { LinearGradient } from 'expo-linear-gradient';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Pressable,
@@ -14,6 +15,18 @@ import {
 
 import CreditsModal from './CreditsModal';
 import { ALL_SOUNDS, FEATURED_SOUNDS, MORE_SOUNDS, Sound } from './sounds';
+import {
+  ACCENT,
+  ACCENT_SOFT,
+  BACKGROUND_GRADIENT,
+  GLASS_BORDER,
+  GLASS_FILL,
+  SELECTED_BORDER,
+  SELECTED_FILL,
+  TEXT_PRIMARY,
+  TEXT_SECONDARY,
+  TEXT_TERTIARY,
+} from './theme';
 
 const DIM_AFTER_MS = 2 * 60 * 1000;
 const DIMMED_BRIGHTNESS = 0.1;
@@ -167,208 +180,246 @@ export default function PlayerScreen() {
 
   // --- UI ---------------------------------------------------------------
 
-  const renderCircle = (sound: Sound, index: number, size: number) => {
+  const renderTile = (
+    sound: Sound,
+    index: number,
+    size: number,
+    showLabel: boolean,
+  ) => {
     const isSelected = index === selectedIndex;
     return (
-      <TouchableOpacity
-        key={sound.id}
-        onPress={() => onSoundTap(index)}
-        style={[
-          styles.circle,
-          {
-            width: size,
-            height: size,
-            borderRadius: size / 2,
-            backgroundColor: `rgba(255,255,255,${isSelected ? 0.3 : 0.1})`,
-            borderColor: `rgba(255,255,255,${isSelected ? 0.8 : 0.3})`,
-            borderWidth: isSelected ? 3 : 1,
-          },
-        ]}
-      >
-        <Text style={{ fontSize: size * 0.4 }}>{sound.icon}</Text>
-      </TouchableOpacity>
+      <View key={sound.id} style={styles.tileWrap}>
+        <TouchableOpacity
+          onPress={() => onSoundTap(index)}
+          style={[
+            styles.tile,
+            {
+              width: size,
+              height: size,
+              borderRadius: size * 0.3,
+              backgroundColor: isSelected ? SELECTED_FILL : GLASS_FILL,
+              borderColor: isSelected ? SELECTED_BORDER : GLASS_BORDER,
+              borderWidth: isSelected ? 2 : 1,
+            },
+          ]}
+        >
+          <Text style={{ fontSize: size * 0.38 }}>{sound.icon}</Text>
+        </TouchableOpacity>
+        {showLabel && (
+          <Text
+            style={[
+              styles.tileLabel,
+              { color: isSelected ? TEXT_PRIMARY : TEXT_TERTIARY },
+            ]}
+          >
+            {sound.name}
+          </Text>
+        )}
+      </View>
     );
   };
 
   return (
-    <Pressable style={styles.root} onPress={wake}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.infoButton}
-          onPress={() => {
-            wake();
-            setCreditsVisible(true);
-          }}
-        >
-          <Text style={styles.infoButtonText}>?</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Featured sounds */}
-      <View style={styles.featuredRow}>
-        {FEATURED_SOUNDS.map((sound, i) =>
-          renderCircle(sound, i, i === selectedIndex ? 80 : 60),
-        )}
-      </View>
-
-      {/* More sounds */}
-      <Text style={styles.sectionTitle}>MORE SOUNDS</Text>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.moreSoundsScroll}
-        contentContainerStyle={styles.moreSoundsContent}
-      >
-        {MORE_SOUNDS.map((sound, i) => {
-          const index = FEATURED_SOUNDS.length + i;
-          const isSelected = index === selectedIndex;
-          return (
-            <View key={sound.id} style={styles.moreSoundItem}>
-              {renderCircle(sound, index, 56)}
-              <Text
-                style={[
-                  styles.moreSoundLabel,
-                  { color: `rgba(255,255,255,${isSelected ? 0.9 : 0.5})` },
-                ]}
-              >
-                {sound.name}
-              </Text>
-            </View>
-          );
-        })}
-      </ScrollView>
-
-      {/* Selected sound title */}
-      <View style={styles.titleContainer}>
-        <Text style={styles.soundTitle}>{selectedSound.name}</Text>
-        <Text style={styles.playState}>
-          {status.playing ? 'playing' : 'paused'}
-        </Text>
-      </View>
-
-      {/* Controls */}
-      <View style={styles.controls}>
-        <View style={styles.timerHeader}>
-          <Text style={styles.controlLabel}>🌙 Sleep Timer</Text>
-          {timerMinutes > 0 && (
-            <Text style={styles.timerValue}>{formatTimer()}</Text>
-          )}
+    <Pressable style={styles.flex} onPress={wake}>
+      <LinearGradient colors={BACKGROUND_GRADIENT} style={styles.flex}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.flex}>
+            <Text style={styles.appTitle}>Jewel Rain</Text>
+            <Text style={styles.appSubtitle}>Pick a sound and drift away</Text>
+          </View>
+          <TouchableOpacity
+            style={styles.infoButton}
+            onPress={() => {
+              wake();
+              setCreditsVisible(true);
+            }}
+          >
+            <Text style={styles.infoButtonText}>i</Text>
+          </TouchableOpacity>
         </View>
-        <View style={styles.timerRow}>
-          {TIMER_OPTIONS.map((minutes) => {
-            const isSelected = timerMinutes === minutes;
-            return (
-              <TouchableOpacity
-                key={minutes}
-                onPress={() => setSleepTimer(minutes)}
-                style={[
-                  styles.timerChip,
-                  {
-                    backgroundColor: `rgba(255,255,255,${isSelected ? 0.3 : 0.1})`,
-                  },
-                ]}
-              >
-                <Text
+
+        {/* Featured sounds */}
+        <View style={styles.featuredRow}>
+          {FEATURED_SOUNDS.map((sound, i) => renderTile(sound, i, 88, false))}
+        </View>
+
+        {/* More sounds */}
+        <Text style={styles.sectionTitle}>MORE SOUNDS</Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.moreSoundsScroll}
+          contentContainerStyle={styles.moreSoundsContent}
+        >
+          {MORE_SOUNDS.map((sound, i) =>
+            renderTile(sound, FEATURED_SOUNDS.length + i, 68, true),
+          )}
+        </ScrollView>
+
+        {/* Selected sound title + play state */}
+        <View style={styles.titleContainer}>
+          <Text style={styles.soundTitle}>{selectedSound.name}</Text>
+          <View
+            style={[
+              styles.playChip,
+              {
+                backgroundColor: status.playing ? ACCENT_SOFT : GLASS_FILL,
+                borderColor: status.playing ? ACCENT : GLASS_BORDER,
+                opacity: status.playing ? 1 : 0.5,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.playChipText,
+                { color: status.playing ? ACCENT : TEXT_TERTIARY },
+              ]}
+            >
+              {status.playing ? '♫ Playing' : '❚❚ Paused'}
+            </Text>
+          </View>
+        </View>
+
+        {/* Controls */}
+        <View style={styles.controls}>
+          <View style={styles.timerHeader}>
+            <Text style={styles.controlLabel}>🌙 Sleep Timer</Text>
+            {timerMinutes > 0 && (
+              <Text style={styles.timerValue}>{formatTimer()}</Text>
+            )}
+          </View>
+          <View style={styles.timerRow}>
+            {TIMER_OPTIONS.map((minutes) => {
+              const isSelected = timerMinutes === minutes;
+              return (
+                <TouchableOpacity
+                  key={minutes}
+                  onPress={() => setSleepTimer(minutes)}
                   style={[
-                    styles.timerChipText,
-                    isSelected && { fontWeight: 'bold' },
+                    styles.timerChip,
+                    {
+                      backgroundColor: isSelected ? SELECTED_FILL : GLASS_FILL,
+                      borderColor: isSelected ? SELECTED_BORDER : GLASS_BORDER,
+                    },
                   ]}
                 >
-                  {minutes === 0 ? 'Off' : `${minutes}m`}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
+                  <Text
+                    style={[
+                      styles.timerChipText,
+                      {
+                        color: isSelected ? TEXT_PRIMARY : TEXT_SECONDARY,
+                        fontWeight: isSelected ? 'bold' : 'normal',
+                      },
+                    ]}
+                  >
+                    {minutes === 0 ? 'Off' : `${minutes}m`}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+          <View style={styles.volumeRow}>
+            <Text style={styles.volumeIcon}>🔉</Text>
+            <Slider
+              style={styles.slider}
+              value={volume}
+              onValueChange={onVolumeChange}
+              minimumValue={0}
+              maximumValue={1}
+              minimumTrackTintColor={ACCENT}
+              maximumTrackTintColor={GLASS_BORDER}
+              thumbTintColor="#ffffff"
+            />
+            <Text style={styles.volumeIcon}>🔊</Text>
+          </View>
         </View>
-        <View style={styles.volumeRow}>
-          <Text style={styles.volumeIcon}>🔉</Text>
-          <Slider
-            style={styles.slider}
-            value={volume}
-            onValueChange={onVolumeChange}
-            minimumValue={0}
-            maximumValue={1}
-            minimumTrackTintColor="#ffffff"
-            maximumTrackTintColor="rgba(255,255,255,0.3)"
-            thumbTintColor="#ffffff"
-          />
-          <Text style={styles.volumeIcon}>🔊</Text>
-        </View>
-      </View>
 
-      {/* Dim overlay */}
-      {isDimmed && (
-        <Pressable style={styles.dimOverlay} onPress={wake}>
-          <Text style={styles.dimIcon}>🌙</Text>
-          <Text style={styles.dimText}>Tap to wake</Text>
-        </Pressable>
-      )}
+        {/* Dim overlay */}
+        {isDimmed && (
+          <Pressable style={styles.dimOverlay} onPress={wake}>
+            <Text style={styles.dimIcon}>🌙</Text>
+            <Text style={styles.dimText}>Tap to wake</Text>
+          </Pressable>
+        )}
 
-      <CreditsModal
-        visible={creditsVisible}
-        onClose={() => setCreditsVisible(false)}
-      />
+        <CreditsModal
+          visible={creditsVisible}
+          onClose={() => setCreditsVisible(false)}
+        />
+      </LinearGradient>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
+  flex: {
     flex: 1,
-    backgroundColor: '#0a0a0a',
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
-    paddingHorizontal: 20,
-    paddingTop: 10,
+    alignItems: 'center',
+    paddingHorizontal: 28,
+    paddingTop: 16,
+  },
+  appTitle: {
+    color: TEXT_PRIMARY,
+    fontSize: 22,
+    fontWeight: '600',
+    letterSpacing: 0.3,
+  },
+  appSubtitle: {
+    color: TEXT_TERTIARY,
+    fontSize: 13,
   },
   infoButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: GLASS_FILL,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
+    borderColor: GLASS_BORDER,
     alignItems: 'center',
     justifyContent: 'center',
   },
   infoButtonText: {
-    color: 'rgba(255,255,255,0.8)',
+    color: TEXT_SECONDARY,
     fontSize: 18,
+    fontStyle: 'italic',
+    fontWeight: '600',
   },
   featuredRow: {
-    height: 100,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-evenly',
-    marginTop: 10,
+    marginTop: 24,
   },
-  circle: {
+  tileWrap: {
+    alignItems: 'center',
+  },
+  tile: {
     alignItems: 'center',
     justifyContent: 'center',
   },
+  tileLabel: {
+    fontSize: 11,
+    marginTop: 6,
+  },
   sectionTitle: {
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: 13,
-    letterSpacing: 1.5,
-    marginTop: 24,
-    marginBottom: 10,
-    paddingHorizontal: 30,
+    color: TEXT_TERTIARY,
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: 2,
+    marginTop: 28,
+    marginBottom: 12,
+    paddingHorizontal: 28,
   },
   moreSoundsScroll: {
     flexGrow: 0,
   },
   moreSoundsContent: {
     paddingHorizontal: 24,
-    gap: 14,
-  },
-  moreSoundItem: {
-    alignItems: 'center',
-  },
-  moreSoundLabel: {
-    fontSize: 11,
-    marginTop: 6,
+    gap: 12,
   },
   titleContainer: {
     flex: 1,
@@ -376,22 +427,30 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   soundTitle: {
-    color: '#fff',
-    fontSize: 32,
+    color: TEXT_PRIMARY,
+    fontSize: 30,
     fontWeight: '300',
+    letterSpacing: 0.5,
   },
-  playState: {
-    color: 'rgba(255,255,255,0.4)',
-    fontSize: 13,
-    marginTop: 6,
+  playChip: {
+    marginTop: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  playChipText: {
+    fontSize: 12,
+    fontWeight: '500',
   },
   controls: {
-    margin: 30,
+    marginHorizontal: 24,
+    marginBottom: 24,
     padding: 20,
-    borderRadius: 20,
-    backgroundColor: 'rgba(128,128,128,0.3)',
+    borderRadius: 24,
+    backgroundColor: GLASS_FILL,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: GLASS_BORDER,
   },
   timerHeader: {
     flexDirection: 'row',
@@ -399,29 +458,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   controlLabel: {
-    color: 'rgba(255,255,255,0.8)',
+    color: TEXT_SECONDARY,
   },
   timerValue: {
-    color: '#fff',
+    color: TEXT_PRIMARY,
     fontWeight: 'bold',
   },
   timerRow: {
     flexDirection: 'row',
     justifyContent: 'space-evenly',
-    marginTop: 15,
+    marginTop: 14,
   },
   timerChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 15,
+    paddingHorizontal: 16,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1,
   },
   timerChipText: {
-    color: '#fff',
+    fontSize: 14,
   },
   volumeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 18,
   },
   volumeIcon: {
     fontSize: 14,
@@ -445,7 +505,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   dimText: {
-    color: 'rgba(255,255,255,0.5)',
+    color: TEXT_TERTIARY,
     fontSize: 16,
     marginTop: 10,
   },

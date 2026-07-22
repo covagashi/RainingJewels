@@ -5,6 +5,7 @@ import 'package:just_audio/just_audio.dart';
 
 import '../models/sound.dart';
 import '../services/audio_service.dart';
+import '../theme.dart';
 import 'sound_credits_sheet.dart';
 
 /// Main player UI: featured sounds, the "More sounds" section, sleep timer
@@ -128,32 +129,39 @@ class _SoundPlayerState extends State<SoundPlayer> {
   void _showInfoSheet() {
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: Colors.grey.shade900,
+      backgroundColor: kBgMid,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       builder: (context) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            const SizedBox(height: 8),
             ListTile(
-              leading: const Icon(Icons.email_outlined, color: Colors.white70),
-              title: const Text('Contact', style: TextStyle(color: Colors.white)),
+              leading: const Icon(Icons.email_outlined, color: kTextSecondary),
+              title: const Text('Contact', style: TextStyle(color: kTextPrimary)),
               subtitle: const Text(
                 'hello@covaga.xyz — Subject: Raining Jewels - FAQ',
-                style: TextStyle(color: Colors.white54),
+                style: TextStyle(color: kTextTertiary),
               ),
               onTap: () => Navigator.pop(context),
             ),
             ListTile(
-              leading: const Icon(Icons.library_music_outlined, color: Colors.white70),
-              title: const Text('Sound credits', style: TextStyle(color: Colors.white)),
+              leading:
+                  const Icon(Icons.library_music_outlined, color: kTextSecondary),
+              title: const Text('Sound credits',
+                  style: TextStyle(color: kTextPrimary)),
               subtitle: const Text(
                 'Licenses and authors of the bundled sounds',
-                style: TextStyle(color: Colors.white54),
+                style: TextStyle(color: kTextTertiary),
               ),
               onTap: () {
                 Navigator.pop(context);
                 showSoundCreditsSheet(context);
               },
             ),
+            const SizedBox(height: 8),
           ],
         ),
       ),
@@ -162,241 +170,299 @@ class _SoundPlayerState extends State<SoundPlayer> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Positioned(
-          top: 10,
-          right: 20,
-          child: IconButton(
-            onPressed: _showInfoSheet,
-            style: IconButton.styleFrom(
-              backgroundColor: Colors.white.withValues(alpha: 0.1),
-              side: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
-            ),
-            icon: Icon(
-              Icons.help_outline,
-              color: Colors.white.withValues(alpha: 0.8),
-              size: 20,
+        // Header
+        Padding(
+          padding: const EdgeInsets.fromLTRB(28, 16, 16, 0),
+          child: Row(
+            children: [
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Jewel Rain',
+                      style: TextStyle(
+                        color: kTextPrimary,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                    Text(
+                      'Pick a sound and drift away',
+                      style: TextStyle(color: kTextTertiary, fontSize: 13),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                onPressed: _showInfoSheet,
+                style: IconButton.styleFrom(
+                  backgroundColor: kGlassFill,
+                  side: const BorderSide(color: kGlassBorder),
+                ),
+                icon: const Icon(Icons.info_outline,
+                    color: kTextSecondary, size: 20),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 20),
+
+        // Featured sounds
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: List.generate(kFeaturedSounds.length, (index) {
+            return _SoundTile(
+              sound: kFeaturedSounds[index],
+              isSelected: index == _selectedIndex,
+              isPlaying: index == _selectedIndex && _isPlaying,
+              size: 88,
+              onTap: () => _onSoundTap(index),
+            );
+          }),
+        ),
+
+        const SizedBox(height: 28),
+
+        // "More sounds" section
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 28),
+          child: Text(
+            'MORE SOUNDS',
+            style: TextStyle(
+              color: kTextTertiary,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 2,
             ),
           ),
         ),
-        Column(
-          children: [
-            const SizedBox(height: 70),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 96,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            itemCount: kMoreSounds.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            itemBuilder: (context, i) {
+              final index = kFeaturedSounds.length + i;
+              return _SoundTile(
+                sound: kMoreSounds[i],
+                isSelected: index == _selectedIndex,
+                isPlaying: index == _selectedIndex && _isPlaying,
+                size: 68,
+                showLabel: true,
+                onTap: () => _onSoundTap(index),
+              );
+            },
+          ),
+        ),
 
-            // Featured sounds
-            SizedBox(
-              height: 100,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: List.generate(kFeaturedSounds.length, (index) {
-                  final isSelected = index == _selectedIndex;
-                  return _SoundCircle(
-                    sound: kFeaturedSounds[index],
-                    isSelected: isSelected,
-                    size: isSelected ? 80 : 60,
-                    onTap: () => _onSoundTap(index),
-                  );
-                }),
+        const Spacer(),
+
+        // Selected sound title + play state
+        Center(
+          child: Column(
+            children: [
+              Text(
+                _selectedSound.name,
+                style: const TextStyle(
+                  color: kTextPrimary,
+                  fontSize: 30,
+                  fontWeight: FontWeight.w300,
+                  letterSpacing: 0.5,
+                ),
               ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // "More sounds" section
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 30),
-              child: Row(
-                children: [
-                  Icon(Icons.spa_outlined,
-                      color: Colors.white.withValues(alpha: 0.7), size: 18),
-                  const SizedBox(width: 8),
-                  Text(
-                    'More sounds',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.7),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 1.2,
-                    ),
+              const SizedBox(height: 8),
+              AnimatedOpacity(
+                duration: const Duration(milliseconds: 200),
+                opacity: _isPlaying ? 1 : 0.4,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: _isPlaying ? kAccentSoft : kGlassFill,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                        color: _isPlaying ? kAccent : kGlassBorder, width: 1),
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 10),
-            SizedBox(
-              height: 92,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                itemCount: kMoreSounds.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 14),
-                itemBuilder: (context, i) {
-                  final index = kFeaturedSounds.length + i;
-                  final sound = kMoreSounds[i];
-                  final isSelected = index == _selectedIndex;
-                  return Column(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      _SoundCircle(
-                        sound: sound,
-                        isSelected: isSelected,
-                        size: 56,
-                        fontSize: 22,
-                        onTap: () => _onSoundTap(index),
+                      Icon(
+                        _isPlaying
+                            ? Icons.graphic_eq
+                            : Icons.pause_circle_outline,
+                        color: _isPlaying ? kAccent : kTextTertiary,
+                        size: 14,
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(width: 6),
                       Text(
-                        sound.name,
+                        _isPlaying ? 'Playing' : 'Paused',
                         style: TextStyle(
-                          color: Colors.white
-                              .withValues(alpha: isSelected ? 0.9 : 0.5),
-                          fontSize: 11,
+                          color: _isPlaying ? kAccent : kTextTertiary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
-                  );
-                },
+                  ),
+                ),
               ),
-            ),
+            ],
+          ),
+        ),
 
-            const Spacer(),
+        const Spacer(),
 
-            // Selected sound title
-            Text(
-              _selectedSound.name,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 32,
-                fontWeight: FontWeight.w300,
-              ),
-            ),
-
-            const Spacer(),
-
-            // Controls
-            Container(
-              margin: const EdgeInsets.all(30),
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.grey.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-              ),
-              child: Column(
+        // Controls
+        Container(
+          margin: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: kGlassFill,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: kGlassBorder),
+          ),
+          child: Column(
+            children: [
+              Row(
                 children: [
-                  Row(
-                    children: [
-                      Icon(Icons.bedtime,
-                          color: Colors.white.withValues(alpha: 0.8), size: 20),
-                      const SizedBox(width: 10),
-                      Text('Sleep Timer',
-                          style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.8))),
-                      const Spacer(),
-                      if (_timerActive)
-                        Text(
-                          _formatTimer(),
-                          style: const TextStyle(
-                              color: Colors.white, fontWeight: FontWeight.bold),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 15),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [0, 15, 30, 60].map((minutes) {
-                      final isSelected = _timerMinutes == minutes;
-                      return GestureDetector(
-                        onTap: () => _setTimer(minutes),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: Colors.white
-                                .withValues(alpha: isSelected ? 0.3 : 0.1),
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                          child: Text(
-                            minutes == 0 ? 'Off' : '${minutes}m',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: isSelected
-                                  ? FontWeight.bold
-                                  : FontWeight.normal,
-                            ),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      Icon(Icons.volume_down,
-                          color: Colors.white.withValues(alpha: 0.6), size: 18),
-                      Expanded(
-                        child: Slider(
-                          value: _volume,
-                          activeColor: Colors.white,
-                          inactiveColor: Colors.white.withValues(alpha: 0.3),
-                          onChanged: (value) {
-                            setState(() => _volume = value);
-                            _audioHandler.setVolume(value);
-                          },
-                        ),
-                      ),
-                      Icon(Icons.volume_up,
-                          color: Colors.white.withValues(alpha: 0.6), size: 18),
-                    ],
-                  ),
+                  const Icon(Icons.bedtime_outlined,
+                      color: kTextSecondary, size: 20),
+                  const SizedBox(width: 10),
+                  const Text('Sleep Timer',
+                      style: TextStyle(color: kTextSecondary)),
+                  const Spacer(),
+                  if (_timerActive)
+                    Text(
+                      _formatTimer(),
+                      style: const TextStyle(
+                          color: kTextPrimary, fontWeight: FontWeight.bold),
+                    ),
                 ],
               ),
-            ),
-          ],
+              const SizedBox(height: 14),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [0, 15, 30, 60].map((minutes) {
+                  final isSelected = _timerMinutes == minutes;
+                  return GestureDetector(
+                    onTap: () => _setTimer(minutes),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 7),
+                      decoration: BoxDecoration(
+                        color: isSelected ? kSelectedFill : kGlassFill,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: isSelected ? Colors.white70 : kGlassBorder,
+                        ),
+                      ),
+                      child: Text(
+                        minutes == 0 ? 'Off' : '${minutes}m',
+                        style: TextStyle(
+                          color: isSelected ? kTextPrimary : kTextSecondary,
+                          fontWeight:
+                              isSelected ? FontWeight.bold : FontWeight.normal,
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 18),
+              Row(
+                children: [
+                  const Icon(Icons.volume_down,
+                      color: kTextTertiary, size: 18),
+                  Expanded(
+                    child: SliderTheme(
+                      data: SliderTheme.of(context).copyWith(
+                        trackHeight: 3,
+                        thumbShape: const RoundSliderThumbShape(
+                            enabledThumbRadius: 7),
+                      ),
+                      child: Slider(
+                        value: _volume,
+                        activeColor: kAccent,
+                        inactiveColor: kGlassBorder,
+                        onChanged: (value) {
+                          setState(() => _volume = value);
+                          _audioHandler.setVolume(value);
+                        },
+                      ),
+                    ),
+                  ),
+                  const Icon(Icons.volume_up, color: kTextTertiary, size: 18),
+                ],
+              ),
+            ],
+          ),
         ),
       ],
     );
   }
 }
 
-class _SoundCircle extends StatelessWidget {
+class _SoundTile extends StatelessWidget {
   final Sound sound;
   final bool isSelected;
+  final bool isPlaying;
   final double size;
-  final double? fontSize;
+  final bool showLabel;
   final VoidCallback onTap;
 
-  const _SoundCircle({
+  const _SoundTile({
     required this.sound,
     required this.isSelected,
+    required this.isPlaying,
     required this.size,
     required this.onTap,
-    this.fontSize,
+    this.showLabel = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.white.withValues(alpha: isSelected ? 0.3 : 0.1),
-          border: Border.all(
-            color: Colors.white.withValues(alpha: isSelected ? 0.8 : 0.3),
-            width: isSelected ? 3 : 1,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              color: isSelected ? kSelectedFill : kGlassFill,
+              borderRadius: BorderRadius.circular(size * 0.3),
+              border: Border.all(
+                color: isSelected ? Colors.white70 : kGlassBorder,
+                width: isSelected ? 2 : 1,
+              ),
+            ),
+            child: Center(
+              child: Text(sound.icon, style: TextStyle(fontSize: size * 0.38)),
+            ),
           ),
-        ),
-        child: Center(
-          child: Text(
-            sound.icon,
-            style: TextStyle(fontSize: fontSize ?? (isSelected ? 30 : 24)),
-          ),
-        ),
+          if (showLabel) ...[
+            const SizedBox(height: 6),
+            Text(
+              sound.name,
+              style: TextStyle(
+                color: isSelected ? kTextPrimary : kTextTertiary,
+                fontSize: 11,
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }

@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 
 import { ALL_SOUNDS } from './sounds';
+import { ACCENT, BG_SHEET } from './theme';
 
 interface Props {
   visible: boolean;
@@ -79,7 +80,7 @@ const styles = StyleSheet.create({
   },
   sheet: {
     maxHeight: '80%',
-    backgroundColor: '#1c1c1e',
+    backgroundColor: BG_SHEET,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
   },
@@ -115,7 +116,7 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.55)',
   },
   link: {
-    color: '#64b5f6',
+    color: ACCENT,
     textDecorationLine: 'underline',
     fontSize: 12,
   },
