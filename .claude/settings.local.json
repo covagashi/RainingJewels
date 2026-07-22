@@ -17,7 +17,8 @@
       "Bash(\"/c/Program Files/Java/jdk-23/bin/jarsigner.exe\" -verify -verbose -certs build/app/outputs/bundle/release/app-release.aab)",
       "Bash(flutter:*)",
       "Bash(\"/c/Program Files/Java/jdk-23/bin/jarsigner.exe\" -verify build/app/outputs/bundle/release/app-release.aab)",
-      "WebFetch(domain:pub.dev)"
+      "WebFetch(domain:pub.dev)",
+      "Bash(rm -rf /home/user/RainingJewels/jewel-rain-expo/.claude)"
     ],
     "deny": [],
     "ask": []

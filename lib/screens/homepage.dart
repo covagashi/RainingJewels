@@ -1,169 +1,122 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
-import 'package:rainingjewels_new/widgets/working_audio_player.dart';
-import 'package:rainingjewels_new/kConstant.dart';
+import 'package:rainingjewels_new/widgets/sound_player.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:screen_brightness/screen_brightness.dart';
 
 class Homepage extends StatefulWidget {
   static const routeName = "/homepage";
 
+  const Homepage({super.key});
+
   @override
-  _HomepageState createState() => _HomepageState();
+  State<Homepage> createState() => _HomepageState();
 }
 
-class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin {
-  int _selectedIndex = 0;
-  late final Ticker _ticker;
+class _HomepageState extends State<Homepage> {
   bool _isDimmed = false;
   Timer? _dimTimer;
-  double _originalBrightness = 1.0;
-
-  @override
-  void dispose() async {
-    _ticker.dispose();
-    _dimTimer?.cancel();
-    WakelockPlus.disable();
-
-    // Restore original brightness if dimmed
-    if (_isDimmed) {
-      try {
-        await ScreenBrightness().setScreenBrightness(_originalBrightness);
-      } catch (e) {
-        print('Error restoring brightness: $e');
-      }
-    }
-
-    super.dispose();
-  }
 
   @override
   void initState() {
     super.initState();
-    _ticker = this.createTicker((d) {
-      setState(() {});
-    })
-      ..start();
-
-    _initializeApp();
+    WakelockPlus.enable();
     _startDimTimer();
   }
 
-  void _initializeApp() async {
-    // Activar wakelock para mantener pantalla encendida
-    WakelockPlus.enable();
-
-    // Guardar brillo original
-    try {
-      _originalBrightness = await ScreenBrightness().current;
-    } catch (e) {
-      _originalBrightness = 1.0;
+  @override
+  void dispose() {
+    _dimTimer?.cancel();
+    WakelockPlus.disable();
+    if (_isDimmed) {
+      // Fire-and-forget: restore system-controlled brightness on exit.
+      ScreenBrightness().resetApplicationScreenBrightness().catchError((e) {
+        debugPrint('Error restoring brightness: $e');
+      });
     }
+    super.dispose();
   }
 
   void _startDimTimer() {
     _dimTimer?.cancel();
-    _dimTimer = Timer(Duration(minutes: 2), () {
-      _dimScreen();
-    });
+    _dimTimer = Timer(const Duration(minutes: 2), _dimScreen);
   }
 
-  void _dimScreen() async {
-    if (!_isDimmed) {
-      setState(() {
-        _isDimmed = true;
-      });
-      try {
-        await ScreenBrightness().setScreenBrightness(0.1);
-      } catch (e) {
-        // Manejar error silenciosamente
-      }
+  Future<void> _dimScreen() async {
+    if (_isDimmed) return;
+    setState(() => _isDimmed = true);
+    try {
+      await ScreenBrightness().setApplicationScreenBrightness(0.1);
+    } catch (e) {
+      debugPrint('Error dimming screen: $e');
     }
   }
 
-  void _restoreBrightness() async {
-    if (_isDimmed) {
-      setState(() {
-        _isDimmed = false;
-      });
-      try {
-        await ScreenBrightness().setScreenBrightness(_originalBrightness);
-      } catch (e) {
-        // Manejar error silenciosamente
-      }
-      _startDimTimer();
+  Future<void> _restoreBrightness() async {
+    if (!_isDimmed) return;
+    setState(() => _isDimmed = false);
+    try {
+      await ScreenBrightness().resetApplicationScreenBrightness();
+    } catch (e) {
+      debugPrint('Error restoring brightness: $e');
     }
-  }
-
-  @override
-  void didChangeDependencies() {
-    //precacheImage(_blueImage.image, context);
-    super.didChangeDependencies();
+    _startDimTimer();
   }
 
   @override
   Widget build(BuildContext context) {
-
     return GestureDetector(
       onTap: _restoreBrightness,
       onPanUpdate: (_) => _restoreBrightness(),
       child: Scaffold(
-        backgroundColor: kBlueishDye,
         body: SafeArea(
           child: Stack(
             alignment: Alignment.center,
             fit: StackFit.expand,
             children: <Widget>[
-            // Fondo blanco y negro
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.black,
-                    Colors.grey.shade900,
-                    Colors.black,
-                  ],
-                ),
-              ),
-            ),
-
-            // Reproductor que funciona
-            WorkingAudioPlayer(),
-
-            // Overlay de dimmer
-            if (_isDimmed)
               Container(
-                color: Colors.black.withOpacity(0.7),
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.bedtime,
-                        color: Colors.white.withOpacity(0.5),
-                        size: 40,
-                      ),
-                      SizedBox(height: 10),
-                      Text(
-                        'Tap to wake',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.5),
-                          fontSize: 16,
-                        ),
-                      ),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black,
+                      Colors.grey.shade900,
+                      Colors.black,
                     ],
                   ),
                 ),
               ),
-          ],
+              const SoundPlayer(),
+              if (_isDimmed)
+                Container(
+                  color: Colors.black.withValues(alpha: 0.7),
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.bedtime,
+                          color: Colors.white.withValues(alpha: 0.5),
+                          size: 40,
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          'Tap to wake',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.5),
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
       ),
     );
   }
-
 }

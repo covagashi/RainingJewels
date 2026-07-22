@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
-import 'package:rainingjewels_new/screens/homepage.dart';
 import 'package:audio_service/audio_service.dart';
+import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:rainingjewels_new/screens/homepage.dart';
 import 'package:rainingjewels_new/services/audio_service.dart';
 import 'package:rainingjewels_new/services/review_service.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,47 +15,48 @@ void main() async {
   try {
     await AudioService.init(
       builder: () => AudioPlayerHandler(),
-      config: AudioServiceConfig(
+      config: const AudioServiceConfig(
         androidNotificationChannelId: 'com.covaga.jewelrain.channel.audio',
         androidNotificationChannelName: 'Jewel Rain Audio',
-        androidNotificationChannelDescription: 'Audio playback controls for Jewel Rain',
-        androidNotificationOngoing: true,
+        androidNotificationChannelDescription:
+            'Audio playback controls for Jewel Rain',
+        // androidNotificationOngoing has no effect while
+        // androidStopForegroundOnPause is false (the library asserts on it).
+        androidNotificationOngoing: false,
         androidShowNotificationBadge: true,
         androidStopForegroundOnPause: false,
         androidNotificationIcon: 'mipmap/ic_launcher',
         androidNotificationClickStartsActivity: true,
       ),
     );
-    print('Audio service initialized successfully');
   } catch (e) {
-    print('Error initializing audio service: $e');
-    // Continue anyway, the app should still work without background audio
+    // Continue anyway; the app still works without background audio.
+    debugPrint('Error initializing audio service: $e');
   }
 
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 Future<void> _requestNotificationPermission() async {
-  // Only request permission on Android
   if (await Permission.notification.isDenied) {
     await Permission.notification.request();
   }
 }
 
 class MyApp extends StatefulWidget {
+  const MyApp({super.key});
+
   @override
-  _MyAppState createState() => _MyAppState();
+  State<MyApp> createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
-  final _navigatorKey = GlobalKey<NavigatorState>();
-
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    // Incrementar contador de sesiones para el sistema de reseñas
+    // Session counter feeds the in-app review prompts.
     ReviewService.incrementSessionCount();
   }
 
@@ -71,137 +72,121 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
     switch (state) {
       case AppLifecycleState.detached:
-        // App is being completely closed - stop all audio
-        print('App detached - stopping all audio');
-        _stopAllAudio();
-        break;
       case AppLifecycleState.hidden:
-        // App is hidden (could be killed) - stop audio to prevent zombie playback
-        print('App hidden - stopping audio to prevent background zombie playback');
+        // App is being closed or hidden: stop audio to avoid zombie playback.
         _stopAllAudio();
-        break;
-      case AppLifecycleState.paused:
-        // App goes to background - keep audio and notification active
-        print('App paused - keeping audio service active for background playback');
         break;
       case AppLifecycleState.resumed:
-        // App comes back to foreground - ensure notification is visible if audio is playing
-        print('App resumed - checking audio service state');
         _ensureNotificationVisible();
-        // Solicitar reseña si es apropiado
         ReviewService.requestReviewIfAppropriate();
         break;
+      case AppLifecycleState.paused:
       case AppLifecycleState.inactive:
-        // App is inactive (e.g., during phone call) - keep audio running
+        // Keep audio running in the background.
         break;
     }
   }
 
-  void _stopAllAudio() async {
+  Future<void> _stopAllAudio() async {
     try {
-      // Stop the audio handler directly (recommended approach)
       await AudioPlayerHandler.instance.stopAndDispose();
-      print('Audio service stopped due to app lifecycle change');
     } catch (e) {
-      print('Error stopping audio service: $e');
+      debugPrint('Error stopping audio service: $e');
     }
   }
 
-  void _ensureNotificationVisible() async {
+  Future<void> _ensureNotificationVisible() async {
     try {
-      // Check if audio is currently playing
       final audioHandler = AudioPlayerHandler.instance;
       if (audioHandler.isPlaying) {
-        // Re-initialize the audio service to restore notification
         await audioHandler.initializeIfNeeded();
-        print('Audio service notification restored');
       }
     } catch (e) {
-      print('Error restoring notification: $e');
+      debugPrint('Error restoring notification: $e');
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        navigatorKey: _navigatorKey,
-        title: 'Jewel Rain',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
+      title: 'Jewel Rain',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.blue,
+          brightness: Brightness.dark,
         ),
-        home: MyHomePage(),
-        routes: {
-          Homepage.routeName: (BuildContext ctx) => Homepage(),
-        },
-      );
+        scaffoldBackgroundColor: Colors.black,
+      ),
+      home: const WelcomePage(),
+      routes: {
+        Homepage.routeName: (BuildContext ctx) => const Homepage(),
+      },
+    );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  MyHomePage();
+class WelcomePage extends StatelessWidget {
+  const WelcomePage({super.key});
 
-  @override
-  _MyHomePageState createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
         child: Container(
-          padding: EdgeInsets.all(20),
+          padding: const EdgeInsets.all(20),
           color: Colors.grey.shade800,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
-            Flexible(
-              child: Container(
-                height: MediaQuery.of(context).size.width * 0.60,
-                child: Hero(
-                  tag: 'picto',
-                  child: Image.asset('assets/picto.png'),
+              Flexible(
+                child: SizedBox(
+                  height: MediaQuery.of(context).size.width * 0.60,
+                  child: Hero(
+                    tag: 'picto',
+                    child: Image.asset('assets/picto.png'),
+                  ),
                 ),
               ),
-            ),
-            Center(
-                child: RichText(
-              text: TextSpan(
-                children: [
+              const Center(
+                child: Text.rich(
                   TextSpan(
-                      text: "Relaxing",
-                      style: TextStyle(color: Colors.white, fontSize: 40.0)),
-                  TextSpan(
-                      text: "Rain.",
-                      style: TextStyle(
+                    children: [
+                      TextSpan(
+                        text: "Relaxing",
+                        style: TextStyle(color: Colors.white, fontSize: 40.0),
+                      ),
+                      TextSpan(
+                        text: "Rain.",
+                        style: TextStyle(
                           color: Colors.white,
                           fontSize: 40.0,
-                          fontWeight: FontWeight.bold))
-                ],
-              ),
-            )),
-            SizedBox(
-              height: 20,
-            ),
-            InkWell(
-              onTap: () {
-                Navigator.of(context).pushNamed(Homepage.routeName);
-              },
-              child: Container(
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.white, width: 3),
-                  borderRadius: BorderRadius.all(Radius.circular(30)),
-                ),
-                padding: EdgeInsets.all(15),
-                child: Text(
-                  "I want to relax",
-                  style: TextStyle(fontSize: 20, color: Colors.white),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            )
-          ],
+              const SizedBox(height: 20),
+              InkWell(
+                onTap: () {
+                  Navigator.of(context).pushNamed(Homepage.routeName);
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.white, width: 3),
+                    borderRadius: const BorderRadius.all(Radius.circular(30)),
+                  ),
+                  padding: const EdgeInsets.all(15),
+                  child: const Text(
+                    "I want to relax",
+                    style: TextStyle(fontSize: 20, color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
