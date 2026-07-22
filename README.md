@@ -11,8 +11,11 @@ This repository contains two implementations:
 
 ## Features
 
-- 11 looping ambient sounds: Rain, Thunder, Wind, plus a **More sounds** section with Birds, Seashore, Night, Coffee Shop, Purring Cat, Fan, Train and Palm Wind
-- Background playback with media notification (Flutter app)
+- 21 looping ambient sounds: Rain, Thunder, Wind, plus a **More sounds**
+  section with Birds, Seashore, Night, Coffee Shop, Purring Cat, Fan, Train,
+  Palm Wind, Village Morning, Creaking Boat, Heartbeat, Wall Clock, Office,
+  Chatter, Air Travel, Car Ride and Wolves
+- Background playback with media notification / lock screen controls
 - Sleep timer with fade-out (15/30/60 min)
 - Automatic screen dimming after 2 minutes
 - In-app sound credits screen
@@ -44,10 +47,11 @@ npx expo start        # develop with Expo Go / dev client
 
 Notes:
 
-- Background playback is enabled (`shouldPlayInBackground`, iOS `UIBackgroundModes: audio`),
-  but the Expo port does not show a media notification yet. For full parity
-  with the Flutter app, a dev build with a media-session library would be the
-  next step.
+- Background playback and the media notification / lock screen controls use
+  `expo-audio` (`shouldPlayInBackground` + `setActiveForLockScreen`). On
+  Android this relies on a native foreground service added by the expo-audio
+  config plugin, so it needs a **development build** (`npx expo run:android`)
+  or EAS build — in Expo Go, background playback stops after ~3 minutes.
 - Android builds via `npx expo run:android` or EAS (`eas build -p android`).
 
 ## Sound credits
@@ -69,6 +73,20 @@ them into seamless loops. Attributions (also shown in-app):
 | Train | [Train Wheels Ride outside Thailand](https://freesound.org/s/170866/) | [YOH](https://freesound.org/people/YOH/) | CC BY 4.0 |
 | Train | [Train Horn](https://freesound.org/s/248229/) | [CouleurCasquette](https://freesound.org/people/CouleurCasquette/) | CC BY 3.0 |
 | Palm Wind | [Palm Trees in the Wind.wav](https://freesound.org/s/346106/) | [StrangeAcoustics](https://freesound.org/people/StrangeAcoustics/) | CC BY 3.0 |
+| Village Morning | [early morning village alem](https://freesound.org/s/170930/) | [klankbeeld](https://freesound.org/people/klankbeeld/) | CC BY 3.0 |
+| Creaking Boat | [Lake Waves 2.wav](https://freesound.org/s/67884/) | [Benboncan](https://freesound.org/people/Benboncan/) | CC BY 3.0 |
+| Heartbeat | [Heartbeat_02.wav](https://freesound.org/s/216219/) | [RSilveira_88](https://freesound.org/people/RSilveira_88/) | CC BY 3.0 |
+| Wall Clock | [Wall Clock Ticking.wav](https://freesound.org/s/405423/) | [straget](https://freesound.org/people/straget/) | CC BY 3.0 |
+| Office | [The Office](https://freesound.org/s/211945/) | [qubodup](https://freesound.org/people/qubodup/) | CC BY 3.0 |
+| Chatter | [Crowd Talking During Interval](https://freesound.org/s/163390/) | [blouhond](https://freesound.org/people/blouhond/) | CC BY 3.0 |
+| Air Travel | [In-flight Ambience - Boeing 737-838](https://freesound.org/s/47254/) | [digifishmusic](https://freesound.org/people/digifishmusic/) | CC BY 3.0 |
+| Car Ride | [hybrid Toyota Yaris drive](https://freesound.org/s/476833/) | [klankbeeld](https://freesound.org/people/klankbeeld/) | CC BY 3.0 |
+| Wolves | [Wolves howling, small pack](https://freesound.org/s/243495/) | [YleArkisto](https://freesound.org/people/YleArkisto/) | CC BY 3.0 |
+
+The remaining Noice sounds (campfire, crickets, white/pink/brownian noise,
+water stream, soft wind, wind chimes, walking in snow, public library,
+scuba diving) are not bundled because their audio has no clearly licensed
+public source in the library manifest.
 
 Licenses: [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) ·
 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)
