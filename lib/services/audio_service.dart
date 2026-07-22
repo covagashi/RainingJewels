@@ -1,6 +1,7 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:just_audio/just_audio.dart';
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 
 class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
   static final _instance = AudioPlayerHandler._internal();
@@ -104,16 +105,14 @@ class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
         processingState: AudioProcessingState.ready,
       ));
 
-      print('AudioService: Playing $assetPath');
     } catch (e) {
-      print('AudioService: Error playing audio: $e');
-      throw e;
+      debugPrint('AudioService: Error playing audio: $e');
+      rethrow;
     }
   }
 
   @override
   Future<void> play() async {
-    print('AudioService: Play button pressed');
 
     // Actually play the audio
     await _player.play();
@@ -128,7 +127,6 @@ class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
 
   @override
   Future<void> pause() async {
-    print('AudioService: Pause button pressed');
 
     // Actually pause the audio
     await _player.pause();
@@ -143,7 +141,6 @@ class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
 
   @override
   Future<void> stop() async {
-    print('AudioService: Stop button pressed');
 
     // Stop the actual audio player
     await _player.stop();
@@ -184,9 +181,8 @@ class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
       ));
 
       _isInitialized = false;
-      print('AudioService: Stopped and disposed successfully');
     } catch (e) {
-      print('Error during stopAndDispose: $e');
+      debugPrint('Error during stopAndDispose: $e');
     }
   }
 

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:in_app_review/in_app_review.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -73,7 +74,7 @@ class ReviewService {
 
     } catch (e) {
       // Ignorar errores silenciosamente según mejores prácticas
-      print('Error requesting review: $e');
+      debugPrint('Error requesting review: $e');
     }
   }
 
@@ -84,7 +85,7 @@ class ReviewService {
         await _inAppReview.openStoreListing();
       }
     } catch (e) {
-      print('Error opening store listing: $e');
+      debugPrint('Error opening store listing: $e');
     }
   }
 
