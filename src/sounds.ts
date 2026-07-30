@@ -12,7 +12,6 @@ export interface SoundAttribution {
 export interface Sound {
   id: string;
   name: string;
-  icon: string;
   source: AudioSource;
   attributions: SoundAttribution[];
 }
@@ -36,23 +35,20 @@ export const FEATURED_SOUNDS: Sound[] = [
   {
     id: 'rain',
     name: 'Rain',
-    icon: '🌧️',
     source: require('../assets/sounds/rain.mp3'),
-    attributions: [],
+    attributions: [NOICE_GPL('Rain')],
   },
   {
     id: 'thunder',
     name: 'Thunder',
-    icon: '⚡',
     source: require('../assets/sounds/thunder.mp3'),
-    attributions: [],
+    attributions: [NOICE_GPL('Thunder')],
   },
   {
     id: 'wind',
     name: 'Wind',
-    icon: '🍃',
     source: require('../assets/sounds/wind.mp3'),
-    attributions: [],
+    attributions: [NOICE_GPL('Wind')],
   },
 ];
 
@@ -68,7 +64,6 @@ export const MORE_SOUNDS: Sound[] = [
   {
     id: 'birds',
     name: 'Birds',
-    icon: '🐦',
     source: require('../assets/sounds/birds.mp3'),
     attributions: [
       {
@@ -84,7 +79,6 @@ export const MORE_SOUNDS: Sound[] = [
   {
     id: 'seashore',
     name: 'Seashore',
-    icon: '🌊',
     source: require('../assets/sounds/seashore.mp3'),
     attributions: [
       {
@@ -124,7 +118,6 @@ export const MORE_SOUNDS: Sound[] = [
   {
     id: 'night',
     name: 'Night',
-    icon: '🌙',
     source: require('../assets/sounds/night.mp3'),
     attributions: [
       {
@@ -140,7 +133,6 @@ export const MORE_SOUNDS: Sound[] = [
   {
     id: 'coffee_shop',
     name: 'Coffee Shop',
-    icon: '☕',
     source: require('../assets/sounds/coffee_shop.mp3'),
     attributions: [
       {
@@ -156,7 +148,6 @@ export const MORE_SOUNDS: Sound[] = [
   {
     id: 'purring_cat',
     name: 'Purring Cat',
-    icon: '🐱',
     source: require('../assets/sounds/purring_cat.mp3'),
     attributions: [
       {
@@ -172,7 +163,6 @@ export const MORE_SOUNDS: Sound[] = [
   {
     id: 'fan',
     name: 'Fan',
-    icon: '🌀',
     source: require('../assets/sounds/fan.mp3'),
     attributions: [
       {
@@ -188,7 +178,6 @@ export const MORE_SOUNDS: Sound[] = [
   {
     id: 'train',
     name: 'Train',
-    icon: '🚂',
     source: require('../assets/sounds/train.mp3'),
     attributions: [
       {
@@ -212,7 +201,6 @@ export const MORE_SOUNDS: Sound[] = [
   {
     id: 'palm_wind',
     name: 'Palm Wind',
-    icon: '🌴',
     source: require('../assets/sounds/wind_through_palm_trees.mp3'),
     attributions: [
       {
@@ -228,7 +216,6 @@ export const MORE_SOUNDS: Sound[] = [
   {
     id: 'village_morning',
     name: 'Village Morning',
-    icon: '🌅',
     source: require('../assets/sounds/village_morning.mp3'),
     attributions: [
       {
@@ -244,7 +231,6 @@ export const MORE_SOUNDS: Sound[] = [
   {
     id: 'creaking_boat',
     name: 'Creaking Boat',
-    icon: '⛵',
     source: require('../assets/sounds/creaking_boat.mp3'),
     attributions: [
       {
@@ -260,7 +246,6 @@ export const MORE_SOUNDS: Sound[] = [
   {
     id: 'heartbeat',
     name: 'Heartbeat',
-    icon: '💓',
     source: require('../assets/sounds/heartbeat.mp3'),
     attributions: [
       {
@@ -276,7 +261,6 @@ export const MORE_SOUNDS: Sound[] = [
   {
     id: 'wall_clock',
     name: 'Wall Clock',
-    icon: '🕰️',
     source: require('../assets/sounds/wall_clock.mp3'),
     attributions: [
       {
@@ -292,7 +276,6 @@ export const MORE_SOUNDS: Sound[] = [
   {
     id: 'office',
     name: 'Office',
-    icon: '🏢',
     source: require('../assets/sounds/office.mp3'),
     attributions: [
       {
@@ -308,7 +291,6 @@ export const MORE_SOUNDS: Sound[] = [
   {
     id: 'quiet_conversations',
     name: 'Chatter',
-    icon: '🗣️',
     source: require('../assets/sounds/quiet_conversations.mp3'),
     attributions: [
       {
@@ -324,7 +306,6 @@ export const MORE_SOUNDS: Sound[] = [
   {
     id: 'air_travel',
     name: 'Air Travel',
-    icon: '✈️',
     source: require('../assets/sounds/air_travel.mp3'),
     attributions: [
       {
@@ -340,7 +321,6 @@ export const MORE_SOUNDS: Sound[] = [
   {
     id: 'electric_car',
     name: 'Car Ride',
-    icon: '🚙',
     source: require('../assets/sounds/electric_car.mp3'),
     attributions: [
       {
@@ -356,7 +336,6 @@ export const MORE_SOUNDS: Sound[] = [
   {
     id: 'wolves',
     name: 'Wolves',
-    icon: '🐺',
     source: require('../assets/sounds/wolves.mp3'),
     attributions: [
       {
@@ -372,77 +351,66 @@ export const MORE_SOUNDS: Sound[] = [
   {
     id: 'campfire',
     name: 'Campfire',
-    icon: '🔥',
     source: require('../assets/sounds/campfire.mp3'),
     attributions: [NOICE_GPL('Campfire')],
   },
   {
     id: 'crickets',
     name: 'Crickets',
-    icon: '🦗',
     source: require('../assets/sounds/crickets.mp3'),
     attributions: [NOICE_GPL('Crickets')],
   },
   {
     id: 'water_stream',
     name: 'Stream',
-    icon: '🏞️',
     source: require('../assets/sounds/water_stream.mp3'),
     attributions: [NOICE_GPL('Water Stream')],
   },
   {
     id: 'soft_wind',
     name: 'Soft Wind',
-    icon: '🍂',
     source: require('../assets/sounds/soft_wind.mp3'),
     attributions: [NOICE_GPL('Soft Wind')],
   },
   {
     id: 'wind_chimes',
     name: 'Wind Chimes',
-    icon: '🎐',
     source: require('../assets/sounds/wind_chimes.mp3'),
     attributions: [NOICE_GPL('Wind Chimes')],
   },
   {
     id: 'walking_in_snow',
     name: 'Snow Walk',
-    icon: '❄️',
     source: require('../assets/sounds/walking_in_snow.mp3'),
     attributions: [NOICE_GPL('Walking in Snow')],
   },
   {
     id: 'public_library',
     name: 'Library',
-    icon: '📚',
     source: require('../assets/sounds/public_library.mp3'),
     attributions: [NOICE_GPL('Public Library')],
   },
   {
     id: 'scuba_diving',
     name: 'Scuba',
-    icon: '🤿',
     source: require('../assets/sounds/scuba_diving.mp3'),
     attributions: [NOICE_GPL('Scuba Diving')],
   },
   {
     id: 'white_noise',
     name: 'White Noise',
-    icon: '🌫️',
     source: require('../assets/sounds/white_noise.mp3'),
     attributions: [NOICE_GPL('White Noise')],
   },
   {
     id: 'pink_noise',
     name: 'Pink Noise',
-    icon: '🌸',
     source: require('../assets/sounds/pink_noise.mp3'),
     attributions: [NOICE_GPL('Pink Noise')],
   },
   {
     id: 'brownian_noise',
     name: 'Brown Noise',
-    icon: '🟤',
     source: require('../assets/sounds/brownian_noise.mp3'),
     attributions: [NOICE_GPL('Brownian Noise')],
   },

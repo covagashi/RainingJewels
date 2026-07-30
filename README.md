@@ -1,6 +1,6 @@
 # Jewel Rain
 
-Relaxing ambient sounds for meditation and sleep. Built with Expo /
+Ambient sounds for relaxing and meditating. Built with Expo /
 React Native (TypeScript).
 
 Jewel Rain is free software, licensed under the
@@ -17,7 +17,8 @@ Jewel Rain is free software, licensed under the
 - All sounds bundled — works fully offline
 - Background playback with media notification / lock screen controls
   (`expo-audio` `setActiveForLockScreen`)
-- Sleep timer with fade-out (15/30/60 min)
+- "Stop after" timer (15/30/60 min) that rides the volume down over the
+  final 30 seconds rather than cutting
 - Automatic screen dimming after 2 minutes
 - In-app sound credits screen
 

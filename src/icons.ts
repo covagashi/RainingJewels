@@ -1,4 +1,5 @@
 import {
+  Activity,
   AudioLines,
   AudioWaveform,
   Bell,
@@ -28,6 +29,7 @@ import {
   TrainFront,
   TreePalm,
   Droplets,
+  Volume2,
   Waves,
   Wind,
 } from 'lucide-react-native';
@@ -66,13 +68,25 @@ export const SOUND_ICONS: Record<string, LucideIcon> = {
   walking_in_snow: Snowflake,
   public_library: BookOpen,
   scuba_diving: Fish,
+  /* The three noise colours.
+     They used to share two glyphs between them — pink and brown were both
+     AudioLines, and white shared AudioWaveform with the fallback below, so it
+     was also indistinguishable from "sound we have no icon for". They are one
+     family and read as one, but each now has its own mark, ordered by how much
+     low-frequency energy each carries: a dense even waveform, uneven bars, and
+     a single low sweeping line. */
   white_noise: AudioWaveform,
   pink_noise: AudioLines,
-  brownian_noise: AudioLines,
+  brownian_noise: Activity,
 };
 
-/** Fallback for any sound id missing from the map. */
-export const DEFAULT_SOUND_ICON: LucideIcon = AudioWaveform;
+/**
+ * Fallback for any sound id missing from the map.
+ *
+ * Must not be any real sound's icon, or an unknown sound is indistinguishable
+ * from a known one. Volume2 is deliberately generic and used nowhere above.
+ */
+export const DEFAULT_SOUND_ICON: LucideIcon = Volume2;
 
 export function getSoundIcon(id: string): LucideIcon {
   return SOUND_ICONS[id] ?? DEFAULT_SOUND_ICON;
