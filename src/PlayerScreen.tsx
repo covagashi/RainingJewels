@@ -97,6 +97,12 @@ const DIMMED_BRIGHTNESS = 0.28;
  * reached for a control and is waiting on it.
  */
 const SESSION_RECEDE_MS = 3200;
+/**
+ * Floor the receded controls fade to. Low enough to stop competing for
+ * attention, high enough that a control you can still press is a control you
+ * can still see.
+ */
+const SESSION_GHOST_OPACITY = 0.12;
 const TIMER_OPTIONS = [0, 15, 30, 60];
 
 /**
@@ -447,7 +453,13 @@ const SoundTile = React.memo(function SoundTile({
           />
         )}
       </PressableScale>
+      {/* Hidden from assistive tech: the Pressable above already announces the
+          sound name, and this Text is its sibling, so leaving it exposed made
+          every one of the 31 tiles announce twice — once as "Rain, button,
+          selected" and again as a bare "Rain". */}
       <Text
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
         style={[
           styles.tileLabel,
           {
@@ -801,17 +813,37 @@ export default function PlayerScreen() {
   useEffect(() => {
     const target = inSession ? 1 : 0;
     cancelAnimation(recede);
-    recede.value = reducedMotion
-      ? target
-      : withTiming(target, {
-          // Slow going away, quick coming back: receding is ambient, restoring
-          // is a response to a finger already on the glass.
-          duration: inSession ? SESSION_RECEDE_MS : DURATION_BASE,
-          easing: Easing.inOut(Easing.quad),
-        });
-  }, [inSession, reducedMotion, recede]);
+    recede.value = withTiming(target, {
+      // Slow going away, quick coming back: receding is ambient, restoring
+      // is a response to a finger already on the glass.
+      //
+      // Reduce Motion does NOT mean snap. This transition carries no
+      // translation and no parallax — it is a cross-fade, which is the correct
+      // vestibular-safe fallback. Snapping two thirds of the interface out in
+      // one frame would make the gentlest moment in the app the most abrupt,
+      // for exactly the users who need it least abrupt.
+      duration: inSession ? SESSION_RECEDE_MS : DURATION_BASE,
+      easing: Easing.inOut(Easing.quad),
+    });
+  }, [inSession, recede]);
 
-  const recedeStyle = useAnimatedStyle(() => ({ opacity: 1 - recede.value }));
+  /**
+   * Receded, not erased.
+   *
+   * This must never reach opacity 0. Opacity 0 does not disable hit testing in
+   * React Native, so a fully transparent control stays live: a palm, a pocket
+   * or a sleeve could switch sound, arm a stop timer or drag volume to zero
+   * with no visible target and no undo — strictly worse than the black scrim
+   * this replaced, which at least consumed the touch.
+   *
+   * Killing the touch instead (`pointerEvents: 'none'`) would reintroduce the
+   * two-gesture cost the decision exists to remove. So the controls stay
+   * interactive and stay *visible*, just quiet — which is what "recede, don't
+   * disappear" actually asks for.
+   */
+  const recedeStyle = useAnimatedStyle(() => ({
+    opacity: 1 - recede.value * (1 - SESSION_GHOST_OPACITY),
+  }));
 
   // Announce the change and move focus onto the transport, which is one of the
   // three things that survives it. Without this a screen reader is left on a
@@ -826,7 +858,7 @@ export default function PlayerScreen() {
     announcedSessionRef.current = inSession;
     if (inSession) {
       AccessibilityInfo.announceForAccessibility(
-        'Session view. The sound controls are hidden. Touch the screen to bring them back.',
+        'Session view. The screen has dimmed. Everything is still here — touch anywhere to bring it back.',
       );
       const tag = transportRef.current
         ? findNodeHandle(transportRef.current)
@@ -1074,12 +1106,16 @@ export default function PlayerScreen() {
         : 'Playing';
 
   /** Props shared by every block that recedes when the session state engages. */
-  const recedingProps = {
-    accessibilityElementsHidden: inSession,
-    importantForAccessibility: (inSession
-      ? 'no-hide-descendants'
-      : 'auto') as 'no-hide-descendants' | 'auto',
-  };
+  /**
+   * Deliberately empty.
+   *
+   * These controls used to be hidden from assistive tech while receded, to
+   * match their being invisible. They are no longer invisible — they fade to a
+   * ghost and stay pressable — so hiding them would take the controls away from
+   * screen-reader users and from nobody else. A sighted user can still see and
+   * press them; a VoiceOver user should be able to reach them too.
+   */
+  const recedingProps = {};
 
   return (
     /* accessible={false} is load-bearing: RN defaults it to true, and an
@@ -1557,6 +1593,10 @@ const styles = StyleSheet.create({
   // hero moment. The playing state is carried by the accent border, the accent
   // fill, the glyph and the status line instead; shadow* is iOS-only and stays.
   playButtonActive: {
+    // 3px, not 2: playing is the state that has to survive the session dim,
+    // where a 2px ring is a hairline. The border width is compensated in
+    // playButton so the disc does not resize between states.
+    borderWidth: 3,
     borderColor: ACCENT,
     backgroundColor: ACCENT_SOFT,
     shadowColor: ACCENT,

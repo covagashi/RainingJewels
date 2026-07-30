@@ -39,7 +39,14 @@ export const SCROLL_FADE_GRADIENT = [
  * ---------------------------------------------------------------------- */
 
 export const ACCENT = '#9CC2D4'; // muted rain blue — 10.1:1 on BG_TOP
-export const ACCENT_SOFT = 'rgba(156,194,212,0.15)';
+/**
+ * Accent fill for the playing transport. Was 0.15, which composited to
+ * #222A31 — 1.32:1, so the state the app holds for fifteen minutes had less
+ * visual weight than the state it holds for thirty seconds, and on a dimmed
+ * screen the control was a 2px hairline. Product principle 3 says design for
+ * the dimmed screen, and playing is the only state that exists there.
+ */
+export const ACCENT_SOFT = 'rgba(156,194,212,0.32)';
 
 /* -------------------------------------------------------------------------
  * White-alpha ramp
