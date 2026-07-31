@@ -188,7 +188,7 @@ export default function CreditsModal({ visible, onClose }: Props) {
               These sounds come from the open-source Noice sound library. Some
               are Creative Commons recordings shared by their original authors
               and edited into seamless loops by the Noice project; others are
-              Noice&apos;s own recordings, licensed under GPL-3.0. Jewel Rain is
+              Noice&apos;s own recordings, licensed under GPL-3.0. Raining Jewels is
               free software licensed under GPL-3.0, and its source code is
               public.
             </Text>

@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "Jewel Rain",
+    "name": "Raining Jewels",
     "slug": "jewel-rain",
     "version": "1.1.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/app-icon.png",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#0D0F14",
     "ios": {
@@ -20,7 +20,8 @@
       "package": "com.covaga.jewelrain",
       "adaptiveIcon": {
         "backgroundColor": "#0D0F14",
-        "foregroundImage": "./assets/icon.png"
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "monochromeImage": "./assets/adaptive-icon.png"
       },
       "permissions": [
         "android.permission.WAKE_LOCK"

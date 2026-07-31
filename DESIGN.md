@@ -1,5 +1,5 @@
 ---
-name: Jewel Rain
+name: Raining Jewels
 description: A weather station for sound — one continuous run of ambient recordings tuned past a fixed head.
 colors:
   bg-top: "#0D0F14"
@@ -99,7 +99,7 @@ components:
     padding: "16px"
 ---
 
-# Design System: Jewel Rain
+# Design System: Raining Jewels
 
 ## Overview
 

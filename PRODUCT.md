@@ -6,7 +6,7 @@
 
 adaptive
 
-Jewel Rain ships on both Android and iOS as one product that adapts its design
+Raining Jewels ships on both Android and iOS as one product that adapts its design
 language per OS: Material expectations on Android, HIG expectations on iOS.
 Android is the platform in production today (Google Play listing
 `com.covaga.jewelrain`); iOS is configured in `app.json` (bundle identifier
@@ -117,9 +117,16 @@ Explicitly undecided / unrecorded:
   relaxing and meditating", its CTA reads "Choose a sound", and the player
   subtitle reads "Pick a sound and settle in". The sleep-timer control was
   renamed **"Stop after"** with a timer icon, because it names the action the
-  control performs rather than a derived use case. `README.md` still opens
-  with "meditation and sleep" and still calls the feature a sleep timer — it
-  is the last surface carrying the old promise.
+  control performs rather than a derived use case. `README.md` was brought in
+  line on 2026-07-31; no surface carries the old promise any more.
+
+- **Product name — "Raining Jewels" (2026-07-31).** The displayed name was
+  "Jewel Rain"; it is now **Raining Jewels**, matching the repository. The
+  welcome lockup reads light "Raining " + bold "Jewels." with the terminal
+  period. What did **not** change, and cannot: the Play package id
+  `com.covaga.jewelrain`, the iOS bundle identifier, and the Expo slug
+  `jewel-rain`. Those are identity keys on an existing listing — renaming one
+  creates a second app rather than renaming the first.
 
 ## Decisions Taken
 
@@ -158,7 +165,7 @@ Recorded so later work does not reopen them.
 
 ## Brand Commitments
 
-- Name: **Jewel Rain** — one word plus a space, everywhere. The welcome screen
+- Name: **Raining Jewels** — one word plus a space, everywhere. The welcome screen
   styles it as light "Jewel" + bold "Rain." with a terminal period, but the
   readable string always carries the space. (An earlier unspaced "JewelRain."
   lockup was removed on 2026-07-30; the app had been shipping two spellings.)

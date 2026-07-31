@@ -94,6 +94,7 @@ import {
   ACCENT_SOFT,
   AUDIO_FADE_IN_MS,
   BACKGROUND_GRADIENT,
+  BG_SHEET,
   BG_TOP,
   DIVIDER,
   DURATION_BASE,
@@ -244,7 +245,7 @@ const AUDIBLE_LEVEL = 0.05;
  * Long enough that a re-grab reads as "still choosing", short enough that a
  * deliberate release feels answered.
  */
-const DIAL_SETTLE_MS = 350;
+const DIAL_SETTLE_MS = 200;
 /**
  * Rows visible in the dial's window, and where the head sits inside it. More
  * room above than below: the run reads as descending toward the transport, and
@@ -1301,7 +1302,7 @@ export default function PlayerScreen() {
     try {
       player.setActiveForLockScreen(
         true,
-        { title: sound.name, artist: 'Jewel Rain', albumTitle: 'Ambient sounds' },
+        { title: sound.name, artist: 'Raining Jewels', albumTitle: 'Ambient sounds' },
         { showSeekForward: false, showSeekBackward: false, isLiveStream: true },
       );
     } catch {
@@ -2418,7 +2419,11 @@ const styles = StyleSheet.create({
     marginBottom: SPACE_XS,
     padding: SPACE_MD,
     borderRadius: RADIUS_LG,
-    backgroundColor: GLASS_FILL,
+    // BG_SHEET, not GLASS_FILL. This panel overlaps the run, and a 10% white
+    // glass let the dial read straight through the controls. DESIGN.md already
+    // says raised surfaces use the sheet colour — the panel was carrying the
+    // glass treatment left over from the controls card it replaced.
+    backgroundColor: BG_SHEET,
     borderWidth: 1,
     borderColor: GLASS_BORDER,
   },

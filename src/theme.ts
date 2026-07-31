@@ -1,5 +1,5 @@
 /**
- * Visual language for Jewel Rain.
+ * Visual language for Raining Jewels.
  *
  * Deliberately restrained: near-black neutral background, monochrome
  * white-opacity hierarchy (the app's original identity), and one single

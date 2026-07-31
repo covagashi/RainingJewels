@@ -122,8 +122,8 @@ export default function WelcomeScreen({ onStart }: Props) {
           />
         </Animated.View>
         <Text style={styles.title} accessibilityRole="header">
-          <Text style={styles.titleLight}>Jewel </Text>
-          <Text style={styles.titleBold}>Rain.</Text>
+          <Text style={styles.titleLight}>Raining </Text>
+          <Text style={styles.titleBold}>Jewels.</Text>
         </Text>
         <Text style={styles.subtitle}>Ambient sounds for relaxing and meditating</Text>
         <Pressable
