@@ -25,6 +25,17 @@ export const SCRIM = 'rgba(0,0,0,0.65)';
 
 export const BACKGROUND_GRADIENT = [BG_TOP, BG_BOTTOM] as const;
 
+/**
+ * Edge mask for the dial. Resolves to BG_TOP rather than a fourth near-black,
+ * so it dissolves instead of banding. Rows hold a legible opacity right to the
+ * window edge — the softening has to happen in the mask, not in the type, or
+ * names get sliced by a hard clip line while a finger is on them.
+ */
+export const DIAL_EDGE_FADE = [
+  'rgba(13,15,20,1)',
+  'rgba(13,15,20,0)',
+] as const;
+
 /* -------------------------------------------------------------------------
  * Accent
  * ---------------------------------------------------------------------- */

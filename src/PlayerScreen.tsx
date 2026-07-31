@@ -95,6 +95,7 @@ import {
   AUDIO_FADE_IN_MS,
   BACKGROUND_GRADIENT,
   BG_TOP,
+  DIAL_EDGE_FADE,
   DIVIDER,
   DURATION_BASE,
   DURATION_SLOW,
@@ -172,6 +173,28 @@ const RAIN_CORRIDOR_FEATHER = 56;
  */
 const RAIN_CORRIDOR_X_MIN = 0.12;
 const RAIN_CORRIDOR_X_MAX = 0.88;
+/**
+ * The rain runs at rest as well as during playback.
+ *
+ * It used to be gated on `playing` — the layer faded to 0 and every drop was
+ * cancelled — which meant the state the app opens in *every session* had a
+ * dead field where the masthead used to be. The masthead was covering it, not
+ * filling it; deleting the masthead exposed the fact that the only time this
+ * surface was alive was while it was making noise.
+ *
+ * So the field is filled with the world rather than with chrome, and playback
+ * becomes an intensification of something already there. That is also what
+ * makes the session recede read correctly: the interface retiring is a
+ * *reduction of something continuous*, not the one moment the screen has a
+ * pulse.
+ *
+ * At rest is unmistakably quieter on both channels — dimmer and slower — so
+ * starting playback still visibly changes the weather. Cost is 46 UI-thread
+ * animations while paused, which Reanimated runs off the JS thread entirely.
+ * It does NOT justify holding keep-awake: that stays scoped to playback.
+ */
+const RAIN_REST_LEVEL = 0.6;
+const RAIN_REST_SLOWDOWN = 1.8;
 
 /** Press-feedback spring. Physics, not a design token — theme.ts exports none. */
 const PRESS_SPRING = { damping: 18, stiffness: 320 };
@@ -247,14 +270,44 @@ const DIAL_HEAD_ANCHOR = (DIAL_ROWS_ABOVE + 0.5) / DIAL_VISIBLE_ROWS;
 const DIAL_DEPTH_SPAN = DIAL_ROWS_ABOVE + 0.5;
 /**
  * Opacity of the immediate neighbours — one step down the white-alpha ramp —
- * and the floor for every row in the window. 0.34 measures 3.09:1 on BG_TOP,
- * which is the WCAG 1.4.3 large-text floor; the run is set at
- * FONT_DISPLAY_SIZE, and the row that has to be read rather than aimed at is
- * the one at the head, at full opacity.
+ * and the floor for every row in the window. 0.34 measures 3.09:1 on BG_TOP.
+ *
+ * THIS IS A DELIBERATE DEVIATION FROM WCAG 1.4.3, and it is stated plainly
+ * rather than dressed up as compliance. Large text is 18pt ≈ 24dp. The run is
+ * set at FONT_DISPLAY_SIZE but rendered scaled, so only the head and the
+ * immediate neighbours are in that class: DIAL_NEIGHBOUR_SCALE puts the
+ * neighbour at 34 × 0.71 = 24.1dp ≈ 18.1pt, where 3.09:1 genuinely conforms.
+ * Every row past that is smaller, so the floor that applies to it is 4.5:1 —
+ * and 3.09:1 does not meet it. The deviation is exactly that: non-head rows at
+ * distance 2 and beyond.
+ *
+ * It is taken knowingly. Those rows are aim-targets and orientation — they say
+ * where you are in the run and give a thumb somewhere to land — not reading
+ * matter. The row that is *read* is the head, and the head is what the
+ * transport labels, what the accent marks, and what `accessibilityValue.text`
+ * speaks; it sits at full opacity, 19.17:1. The equivalent non-visual path is
+ * the adjustable wrapper below, whose increment and decrement step the head
+ * one name at a time and announce each one, so nothing on this screen is
+ * reachable only by reading dim type.
+ *
+ * Raising this to 0.45 is not the fix: across five rows it trades the dial's
+ * depth for a number and still leaves distance 3 short. The comment that used
+ * to sit here claimed 0.34 *was* the large-text floor for the whole run. It
+ * was wrong twice over, and a comment that misstates conformance is worse than
+ * the deviation it covers, because the next person trusts it instead of
+ * measuring.
  */
 const DIAL_NEIGHBOUR_OPACITY = 0.34;
-/** Scale of the immediate neighbours, and the floor for everything past them. */
-const DIAL_NEIGHBOUR_SCALE = 0.62;
+/**
+ * Scale of the immediate neighbours, and the floor for everything past them.
+ *
+ * 0.71 of FONT_DISPLAY_SIZE is 24.1dp ≈ 18.1pt, which is what puts the first
+ * neighbour inside WCAG's large-text class — see DIAL_NEIGHBOUR_OPACITY. It
+ * was 0.62 (21.1dp ≈ 15.8pt), which was not. DIAL_MIN_SCALE is untouched, so
+ * the depth of the run is unchanged; only the ramp's first step is shallower,
+ * and head:neighbour at 1.41× is still an obvious step.
+ */
+const DIAL_NEIGHBOUR_SCALE = 0.71;
 const DIAL_MIN_SCALE = 0.46;
 /**
  * Row pitch. Derived from the display size the head is set at, plus a line of
@@ -377,22 +430,55 @@ function RainDrop({
   corridorBottom: number;
 }) {
   const progress = useSharedValue(0);
+  const startedRef = useRef(false);
 
   useEffect(() => {
-    if (playing) {
-      progress.value = 0;
+    const duration = playing
+      ? config.duration
+      : Math.round(config.duration * RAIN_REST_SLOWDOWN);
+
+    if (!startedRef.current) {
+      startedRef.current = true;
+      // First run only: the per-drop delay is what stops 46 drops falling in
+      // formation.
       progress.value = withDelay(
         config.delay,
         withRepeat(
-          withTiming(1, { duration: config.duration, easing: Easing.linear }),
+          withTiming(1, { duration, easing: Easing.linear }),
           -1,
           false,
         ),
       );
-    } else {
-      cancelAnimation(progress);
+      return;
     }
+
+    // A speed change, not a restart. Resetting to 0 would send every drop back
+    // to the top of the screen in the same frame on every play and every
+    // pause, which is a wave — the one thing rain must never do. Instead the
+    // cycle already in flight is finished at the new rate, and the endless
+    // repeat picks up from there with its phase intact.
+    const remaining = 1 - progress.value;
+    progress.value = withTiming(
+      1,
+      { duration: Math.max(1, duration * remaining), easing: Easing.linear },
+      (finished) => {
+        'worklet';
+        if (!finished) return;
+        progress.value = 0;
+        progress.value = withRepeat(
+          withTiming(1, { duration, easing: Easing.linear }),
+          -1,
+          false,
+        );
+      },
+    );
   }, [playing, config, progress]);
+
+  useEffect(() => {
+    return () => {
+      cancelAnimation(progress);
+    };
+  }, [progress]);
 
   const animatedStyle = useAnimatedStyle(() => {
     const p = progress.value;
@@ -452,8 +538,11 @@ const RainLayer = React.memo(function RainLayer({
   corridorBottom: number;
 }) {
   const [layout, setLayout] = useState({ width: 0, height: 0 });
+  // Never 0. See RAIN_REST_LEVEL: at rest the weather is turned down, not off.
   const layerStyle = useAnimatedStyle(() => ({
-    opacity: withTiming(playing ? 1 : 0, { duration: DURATION_SLOW }),
+    opacity: withTiming(playing ? 1 : RAIN_REST_LEVEL, {
+      duration: DURATION_SLOW,
+    }),
   }));
   return (
     <Animated.View
@@ -1677,7 +1766,10 @@ export default function PlayerScreen() {
       <LinearGradient colors={BACKGROUND_GRADIENT} style={styles.flex}>
         {/* Ambient rain: a full-screen layer behind every other element, and
             the one thing besides the name at the head and the transport that
-            stays when the interface recedes. */}
+            stays when the interface recedes. It runs at rest too, quieter and
+            slower (see RAIN_REST_LEVEL) — the paused screen is where this app
+            opens every session, and it is not allowed to be a dead field.
+            Reduce Motion removes it outright; nothing here carries meaning. */}
         {!reducedMotion && (
           <RainLayer
             playing={playing}
@@ -1778,6 +1870,29 @@ export default function PlayerScreen() {
                   ))}
               </Animated.ScrollView>
             </View>
+
+            {/* The window's edges, masked rather than faded.
+                Every row holds DIAL_NEIGHBOUR_OPACITY right up to the boundary
+                of the ScrollView, which clips. At rest that is invisible —
+                headOffset lands the rows flush — but under a finger it showed
+                as two hard lines slicing 34pt names in half. The fix belongs
+                here and not in the opacity ramp: the type stays legible and
+                stays hit-testable at exactly the value it had, and the
+                softening is done by the background dissolving over it. */}
+            <LinearGradient
+              colors={DIAL_EDGE_FADE}
+              style={[styles.dialEdge, { top: 0, height: pitch }]}
+              pointerEvents="none"
+            />
+            <LinearGradient
+              colors={DIAL_EDGE_FADE}
+              // Same two stops, run upward, so the opaque end is at the bottom.
+              // Reversing the array instead would widen the token's type.
+              start={{ x: 0.5, y: 1 }}
+              end={{ x: 0.5, y: 0 }}
+              style={[styles.dialEdge, { bottom: 0, height: pitch }]}
+              pointerEvents="none"
+            />
 
             <View
               style={[styles.headMark, { top: headOffset, height: pitch }]}
@@ -2088,6 +2203,16 @@ const styles = StyleSheet.create({
   dialZone: {
     alignSelf: 'stretch',
     flexShrink: 1,
+  },
+  /**
+   * One row deep at every text size, because `height` is set from the live
+   * `pitch` at the call site: the thing being softened is a row of type, so
+   * the mask is measured in rows rather than in pixels someone liked.
+   */
+  dialEdge: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
   },
   dialRow: {
     justifyContent: 'center',
