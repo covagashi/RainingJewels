@@ -18,6 +18,7 @@
     },
     "android": {
       "package": "com.covaga.jewelrain",
+      "versionCode": 7,
       "adaptiveIcon": {
         "backgroundColor": "#0D0F14",
         "foregroundImage": "./assets/adaptive-icon.png",
@@ -50,7 +51,8 @@
           "resizeMode": "contain",
           "backgroundColor": "#0D0F14"
         }
-      ]
+      ],
+      "./plugins/withReleaseSigning"
     ]
   }
 }
