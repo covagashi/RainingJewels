@@ -203,6 +203,16 @@ const FADE_STEPS = 25;
 /** Seconds before the timer expires over which audio rides down to zero. */
 const FADE_OUT_WINDOW_S = 30;
 /**
+ * One tick of that ride-down, in ms.
+ *
+ * Not a design token and deliberately not one: it is the countdown's own sample
+ * rate, not a transition. `remainingSeconds` is React state that steps once a
+ * second, so anything bound to it moves as a staircase. The weather is given a
+ * timing exactly one tick long per tick, which makes it the continuous version
+ * of that staircase rather than a copy of it.
+ */
+const FADE_TICK_MS = 1000;
+/**
  * Switching sounds. The engine is now a two-voice A/B pair, so a switch is a
  * genuine cross-ramp inside one window rather than a ride-down followed by a
  * ride-up: the incoming voice comes up while the outgoing one goes down, on an
@@ -534,21 +544,37 @@ function RainDrop({
  */
 const RainLayer = React.memo(function RainLayer({
   playing,
+  presence,
   drops,
   corridorTop,
   corridorBottom,
 }: {
   playing: boolean;
+  presence: SharedValue<number>;
   drops: DropConfig[];
   corridorTop: number;
   corridorBottom: number;
 }) {
   const [layout, setLayout] = useState({ width: 0, height: 0 });
-  // Never 0. See RAIN_REST_LEVEL: at rest the weather is turned down, not off.
+  /**
+   * Bound to the sound, not to a boolean.
+   *
+   * This was `withTiming(playing ? 1 : RAIN_REST_LEVEL)`, which meant the stop
+   * timer's thirty-second ride-down was invisible: the weather held at full for
+   * the whole fade and then stepped down once, after the sound had already
+   * gone. `presence` carries the same ratio the audio ramp uses, so the sky
+   * clears at the rate the session actually ends at and arrives with the last
+   * of the sound. See the weather block in PlayerScreen.
+   *
+   * Never 0. See RAIN_REST_LEVEL: at rest the weather is turned down, not off.
+   */
   const layerStyle = useAnimatedStyle(() => ({
-    opacity: withTiming(playing ? 1 : RAIN_REST_LEVEL, {
-      duration: DURATION_SLOW,
-    }),
+    opacity: interpolate(
+      presence.value,
+      [0, 1],
+      [RAIN_REST_LEVEL, 1],
+      Extrapolation.CLAMP,
+    ),
   }));
   return (
     <Animated.View
@@ -588,9 +614,14 @@ const RainLayer = React.memo(function RainLayer({
  * reach the audio engine by accident: there is no render on the drag path to
  * hang a side effect off.
  *
- * `accent` rather than `playing` + `isSelected`: a boolean that is false for 29
- * of the 31 rows both before and after a playback change, so the memo actually
+ * `isHead` rather than `playing` + `isSelected`: a boolean that is false for 30
+ * of the 31 rows and changes only when the run moves, so the memo actually
  * holds and only the two rows that changed re-render.
+ *
+ * It used to be `accent` — head *and* audible — which meant every playback
+ * change re-rendered two rows to repaint a colour. The accent is a shared value
+ * now, so a play, a pause and the whole thirty-second close re-render no row at
+ * all.
  */
 interface DialRowProps {
   sound: Sound;
@@ -603,8 +634,10 @@ interface DialRowProps {
    */
   headOffset: number;
   windowHeight: number;
-  accent: boolean;
+  isHead: boolean;
   scrollY: SharedValue<number>;
+  /** 0–1 ramp of genuinely audible sound. Carries the accent on and off. */
+  audible: SharedValue<number>;
   recede: SharedValue<number>;
   reducedMotion: boolean;
   onPress: (index: number) => void;
@@ -616,8 +649,9 @@ const DialRow = React.memo(function DialRow({
   pitch,
   headOffset,
   windowHeight,
-  accent,
+  isHead,
   scrollY,
+  audible,
   recede,
   reducedMotion,
   onPress,
@@ -713,6 +747,35 @@ const DialRow = React.memo(function DialRow({
     return { opacity: base * sessionMix * edge, transform: [{ scale }] };
   });
 
+  /**
+   * The accent, as a ramp rather than a flip.
+   *
+   * The head used to switch colour on a boolean, so at the end of a stop timer
+   * the colour left a frame *after* the sound, as a step — the fade had already
+   * ridden the audio to nothing while the name was still fully accented.
+   * `audible` is that same ratio, so the colour leaves with the sound.
+   *
+   * A CROSS-FADE OF TWO STATIC READINGS, NOT AN ANIMATED COLOUR. The first cut
+   * of this interpolated `color` on an `Animated.Text`, and it measured white on
+   * device while every other channel accented correctly: an animated text colour
+   * has no precedent anywhere in this app — every animation that has ever
+   * shipped here moves `opacity`, `transform` or a View's `backgroundColor` —
+   * and the paragraph kept the static colour from `styles.dialName`. The glyph
+   * could never take an animated colour either (it is an SVG whose colour is a
+   * prop, not a style). So the head carries both readings, each in a flat token
+   * colour, and the ramp moves the one prop this codebase animates everywhere:
+   * opacity. Same construct as `contentStyle` above, which is driven by
+   * `recede` from the same parent and is proven on device.
+   *
+   * Not gated on Reduce Motion. It is a cross-fade with no translation, which
+   * is the correct fallback rather than something to remove — and with the rain
+   * layer gone under Reduce Motion it is the only thing left authoring the end
+   * of a session.
+   */
+  const accentStyle = useAnimatedStyle(() => ({
+    opacity: audible.value,
+  }));
+
   return (
     <View style={[styles.dialRow, { height: pitch }]}>
       <Pressable
@@ -725,16 +788,26 @@ const DialRow = React.memo(function DialRow({
         importantForAccessibility="no-hide-descendants"
       >
         <Animated.View style={[styles.dialRowContent, contentStyle]}>
-          <Icon
-            size={ICON_MD}
-            color={accent ? ACCENT : TEXT_PRIMARY}
-            strokeWidth={ICON_STROKE}
-          />
+          <Icon size={ICON_MD} color={TEXT_PRIMARY} strokeWidth={ICON_STROKE} />
           {/* No numberOfLines. A long name at 200% text wraps out of its row
               rather than being cut in half; the row is a rhythm, not a cage. */}
-          <Text style={[styles.dialName, accent && styles.dialNameAccent]}>
-            {sound.name}
-          </Text>
+          <Text style={styles.dialName}>{sound.name}</Text>
+          {/* The accent reading of the same row, laid exactly over the resting
+              one and faded in by `audible`. Absolutely filled inside the content
+              box, with the same row rules, so it inherits that box's width and
+              therefore wraps identically at every text size — and mounted only
+              on the one row at the head. */}
+          {isHead && (
+            <Animated.View
+              style={[styles.dialRowContent, styles.dialAccentCopy, accentStyle]}
+              pointerEvents="none"
+            >
+              <Icon size={ICON_MD} color={ACCENT} strokeWidth={ICON_STROKE} />
+              <Text style={[styles.dialName, styles.dialNameAccent]}>
+                {sound.name}
+              </Text>
+            </Animated.View>
+          )}
         </Animated.View>
       </Pressable>
     </View>
@@ -823,6 +896,16 @@ export default function PlayerScreen() {
   const [timerMinutes, setTimerMinutes] = useState(0);
   const [remainingSeconds, setRemainingSeconds] = useState(0);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  /**
+   * Set at the instant the stop timer ends playback, cleared when playback next
+   * stops for real. Read only by the weather (below), which needs to tell "the
+   * timer just landed" from "the user turned the timer off" — both leave
+   * `timerMinutes` at 0 with `playing` still true for a frame or two while the
+   * players' status catches up, and they mean opposite things. Inferring it
+   * from state alone would send the sky back to full at the exact moment it had
+   * arrived, or leave it at rest over a session the user had just rescued.
+   */
+  const closingRef = useRef(false);
 
   // Session state. Not a blackout: the interface recedes to the name at the
   // head, the transport and the rain, and the system brightness drops to a
@@ -1692,6 +1775,9 @@ export default function PlayerScreen() {
       countdownRef.current = null;
     }
     timerStoppedRef.current = true;
+    // The weather has already arrived by now; this holds it there across the
+    // frames where the timer is off but the players still report playing.
+    closingRef.current = true;
     try {
       active.pause();
     } catch {}
@@ -1732,6 +1818,107 @@ export default function PlayerScreen() {
         ? 'Starting…'
         : 'Playing';
 
+  // --- The weather ------------------------------------------------------
+
+  /**
+   * How much sound is in the room, 0–1, on the UI thread.
+   *
+   * `presence` is the weather's own reading of playback: 1 while a session is
+   * running, 0 at rest — and, the reason it exists, the stop timer's own ratio
+   * across the fade window. The rain layer's level and the head ticks are read
+   * off it, so the close is authored instead of announced. The screen used to
+   * ignore the ride-down entirely: audio thinned out over thirty seconds while
+   * the weather held at full, then stepped down once the sound was already
+   * gone. Now the sky clears with it and arrives when it does.
+   *
+   * `audible` is the same ramp behind the Earned Accent Rule's gate. The accent
+   * on the head's name and glyph rides it, so colour leaves with the sound
+   * rather than snapping off after it — and still never appears during a
+   * from-silence onset that cannot yet be heard.
+   *
+   * Both are cross-fades with no translation and no parallax, so they are
+   * already correct under Reduce Motion and are deliberately not gated on it.
+   * Reduce Motion is not permission to end a session in a cut; the rain layer
+   * is gone there, which makes the accent the *only* thing authoring the end.
+   *
+   * No new cost: two shared values read by worklets that already run. Nothing
+   * per-drop, no second loop, no per-frame React state.
+   */
+  const presence = useSharedValue(0);
+  const audible = useSharedValue(0);
+  useEffect(() => {
+    const inFade = timerMinutes > 0 && remainingSeconds <= FADE_OUT_WINDOW_S;
+    /**
+     * The audio's own ratio, one tick ahead.
+     *
+     * The stop-timer effect sets the volume to `remainingSeconds /
+     * FADE_OUT_WINDOW_S` and holds it until the next tick. Aiming a one-tick
+     * timing at the ratio the *next* tick will set makes this the continuous
+     * line through that staircase rather than a copy of it running a second
+     * late — and at the last tick the target is 0, which is where playback
+     * stops. The arrival has already happened by the time the sound goes: that
+     * is the difference between landing and stopping.
+     *
+     * Resuming inside the window re-enters the ramp at the ratio the countdown
+     * is actually at, not at full: the session really is twelve seconds from
+     * over, and the weather says so.
+     */
+    const ramp = !playing
+      ? 0
+      : inFade
+        ? Math.max(0, remainingSeconds - 1) / FADE_OUT_WINDOW_S
+        : 1;
+    /*
+     * Hold at the arrival while the close finishes.
+     *
+     * `closingRef` is set by the stop timer itself, not inferred: for the frame
+     * or two between it clearing the timer and the players reporting paused,
+     * the honest reading of state alone is "playing, no timer" — full weather —
+     * which would bounce the sky back up at the one moment it must be still.
+     * Turning the timer *off* by hand in that same window sets nothing, so the
+     * abort still returns the weather to the playing level.
+     */
+    if (!playing) closingRef.current = false;
+    const target = closingRef.current ? 0 : ramp;
+    // Linear across the fade — an eased tick would pulse once a second — and
+    // the app's usual timing for everything else, which is what the play/pause
+    // change has always been. A fresh config per call: one object shared
+    // between two animations is not a construct this codebase has ever proven,
+    // and this is not the place to find out.
+    const stepping = playing && inFade;
+    const timing = () =>
+      stepping
+        ? { duration: FADE_TICK_MS, easing: Easing.linear }
+        : { duration: DURATION_SLOW, easing: Easing.inOut(Easing.quad) };
+
+    /*
+     * Written unconditionally, and deliberately so.
+     *
+     * The first cut guarded each write behind a ref holding the last target, to
+     * avoid re-issuing a timing once a second for the whole length of a stop
+     * timer. That guard is a second copy of the state, and any reload or
+     * remount that resets a shared value while leaving the ref behind latches it
+     * shut for good — the ramp then never moves again and there is nothing on
+     * screen to say why. Re-timing to the value already held is inert: it is a
+     * 400ms animation from 1 to 1, twice a second at worst, and it self-heals
+     * from any desync.
+     *
+     * It also costs nothing at the close. What keeps that from doubling up is
+     * target continuity, not the guard: when the ramp lands on 0 and playback
+     * pauses, `playing → false` asks for 0 while the value is already 0, so the
+     * old `playing ? 1 : rest` step does not happen.
+     */
+    presence.value = withTiming(target, timing());
+    audible.value = withTiming(isAudible ? target : 0, timing());
+  }, [
+    playing,
+    isAudible,
+    timerMinutes,
+    remainingSeconds,
+    presence,
+    audible,
+  ]);
+
   /**
    * The head mark: two ticks on the frame at the fixed play head, so the
    * position the run is read against is a property of the screen rather than
@@ -1746,15 +1933,15 @@ export default function PlayerScreen() {
    * It takes the accent on `playing` rather than `isAudible` — one step earlier
    * than the status line and the name. That is not the interface claiming sound
    * before there is any: the ticks say *where the head is*, and by the time the
-   * onset ramp is running the head has already been committed to.
+   * onset ramp is running the head has already been committed to. `presence` is
+   * exactly that boolean everywhere except the fade window, which is the one
+   * place the ticks should not be reporting a boolean: across the close they
+   * return to GLASS_BORDER on the audio's own ramp, and are back to their
+   * resting treatment as the last of the sound goes.
    */
-  const headAccent = useSharedValue(0);
-  useEffect(() => {
-    headAccent.value = withTiming(playing ? 1 : 0, { duration: DURATION_SLOW });
-  }, [playing, headAccent]);
   const headTickStyle = useAnimatedStyle(() => ({
     backgroundColor: interpolateColor(
-      headAccent.value,
+      presence.value,
       [0, 1],
       [GLASS_BORDER, ACCENT],
     ),
@@ -1830,6 +2017,7 @@ export default function PlayerScreen() {
         {!reducedMotion && (
           <RainLayer
             playing={playing}
+            presence={presence}
             drops={drops}
             corridorTop={corridorTop}
             corridorBottom={corridor.bottom}
@@ -1920,8 +2108,9 @@ export default function PlayerScreen() {
                       pitch={pitch}
                       headOffset={headOffset}
                       windowHeight={dialHeight}
-                      accent={i === selectedIndex && isAudible}
+                      isHead={i === selectedIndex}
                       scrollY={scrollY}
+                      audible={audible}
                       recede={recede}
                       reducedMotion={reducedMotion}
                       onPress={handleRowPress}
@@ -2297,6 +2486,27 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     flexShrink: 1,
   },
+  /**
+   * The head's accent reading, laid over the resting one.
+   *
+   * Absolutely filled inside the content box rather than sized itself, so it
+   * takes that box's measured width and lays its glyph and name out under the
+   * same row rules — identical wrapping at every text size, and no way for the
+   * cross-fade to move anything by a pixel. Out of flow, so the row it sits in
+   * is measured by the resting copy alone.
+   */
+  dialAccentCopy: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  /**
+   * The accent copy's name. A flat token colour on a static Text: the accent is
+   * carried by the copy's opacity, never by an animated `color` — see
+   * `accentStyle` in DialRow for why that distinction is load-bearing.
+   */
   dialNameAccent: {
     color: ACCENT,
   },
