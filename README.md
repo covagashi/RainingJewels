@@ -1,23 +1,24 @@
-# Jewel Rain
+# Raining Jewels
 
-Relaxing ambient sounds for meditation and sleep. Built with Expo /
+Ambient sounds for relaxing and meditating. Built with Expo /
 React Native (TypeScript).
 
-Jewel Rain is free software, licensed under the
+Raining Jewels is free software, licensed under the
 [GPL-3.0](https://www.gnu.org/licenses/gpl-3.0.html) (see `LICENSE`).
 
 ## Features
 
-- 31 looping ambient sounds: Rain, Thunder and Wind featured, plus a
-  **More sounds** section (Birds, Seashore, Night, Coffee Shop, Purring Cat,
-  Fan, Train, Palm Wind, Village Morning, Creaking Boat, Heartbeat,
-  Wall Clock, Office, Chatter, Air Travel, Car Ride, Wolves, Campfire,
-  Crickets, Stream, Soft Wind, Wind Chimes, Snow Walk, Library, Scuba,
-  White/Pink/Brown Noise)
+- **The Dial**: 31 looping ambient sounds as one continuous run moving past a
+  fixed play head. Drag to tune, release and it crossfades in. The order is
+  authored by ear — precipitation, water, air, living outdoors, close body,
+  interior, transit, machine, noise — so neighbouring positions sound like
+  neighbours. It lives in `SEQUENCE` in `src/sounds.ts`, and the module throws
+  if a sound is not placed in it.
 - All sounds bundled — works fully offline
 - Background playback with media notification / lock screen controls
   (`expo-audio` `setActiveForLockScreen`)
-- Sleep timer with fade-out (15/30/60 min)
+- "Stop after" timer (15/30/60 min) that rides the volume down over the
+  final 30 seconds rather than cutting
 - Automatic screen dimming after 2 minutes
 - In-app sound credits screen
 

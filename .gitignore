@@ -39,3 +39,12 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# AI tooling hook configs, written per-machine by the impeccable installer
+.codex/
+.cursor/
+.agents/
+.impeccable/config.local.json
+
+# Windows/Cygwin crash artifacts
+*.stackdump

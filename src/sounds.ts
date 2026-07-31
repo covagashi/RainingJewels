@@ -12,7 +12,6 @@ export interface SoundAttribution {
 export interface Sound {
   id: string;
   name: string;
-  icon: string;
   source: AudioSource;
   attributions: SoundAttribution[];
 }
@@ -31,33 +30,32 @@ const NOICE_GPL = (soundName: string): SoundAttribution => ({
   licenseUrl: GPL_3,
 });
 
-/** The three original sounds, shown as the featured row. */
+/** Noice's own GPL-3.0 recordings. Kept as a data group only — the UI has no
+ * featured row since the Dial landed; ALL_SOUNDS/SEQUENCE is the running order. */
 export const FEATURED_SOUNDS: Sound[] = [
   {
     id: 'rain',
     name: 'Rain',
-    icon: '🌧️',
     source: require('../assets/sounds/rain.mp3'),
-    attributions: [],
+    attributions: [NOICE_GPL('Rain')],
   },
   {
     id: 'thunder',
     name: 'Thunder',
-    icon: '⚡',
     source: require('../assets/sounds/thunder.mp3'),
-    attributions: [],
+    attributions: [NOICE_GPL('Thunder')],
   },
   {
     id: 'wind',
     name: 'Wind',
-    icon: '🍃',
     source: require('../assets/sounds/wind.mp3'),
-    attributions: [],
+    attributions: [NOICE_GPL('Wind')],
   },
 ];
 
 /**
- * Additional sounds shown in the "More sounds" section.
+ * The remaining sounds. There is no "More sounds" section any more — this is a
+ * data group, and SEQUENCE below decides where each one sits in the run.
  *
  * Sourced from the open-source Noice sound library
  * (https://trynoice.com, https://github.com/trynoice); original recordings
@@ -68,7 +66,6 @@ export const MORE_SOUNDS: Sound[] = [
   {
     id: 'birds',
     name: 'Birds',
-    icon: '🐦',
     source: require('../assets/sounds/birds.mp3'),
     attributions: [
       {
@@ -84,7 +81,6 @@ export const MORE_SOUNDS: Sound[] = [
   {
     id: 'seashore',
     name: 'Seashore',
-    icon: '🌊',
     source: require('../assets/sounds/seashore.mp3'),
     attributions: [
       {
@@ -124,7 +120,6 @@ export const MORE_SOUNDS: Sound[] = [
   {
     id: 'night',
     name: 'Night',
-    icon: '🌙',
     source: require('../assets/sounds/night.mp3'),
     attributions: [
       {
@@ -140,7 +135,6 @@ export const MORE_SOUNDS: Sound[] = [
   {
     id: 'coffee_shop',
     name: 'Coffee Shop',
-    icon: '☕',
     source: require('../assets/sounds/coffee_shop.mp3'),
     attributions: [
       {
@@ -156,7 +150,6 @@ export const MORE_SOUNDS: Sound[] = [
   {
     id: 'purring_cat',
     name: 'Purring Cat',
-    icon: '🐱',
     source: require('../assets/sounds/purring_cat.mp3'),
     attributions: [
       {
@@ -172,7 +165,6 @@ export const MORE_SOUNDS: Sound[] = [
   {
     id: 'fan',
     name: 'Fan',
-    icon: '🌀',
     source: require('../assets/sounds/fan.mp3'),
     attributions: [
       {
@@ -188,7 +180,6 @@ export const MORE_SOUNDS: Sound[] = [
   {
     id: 'train',
     name: 'Train',
-    icon: '🚂',
     source: require('../assets/sounds/train.mp3'),
     attributions: [
       {
@@ -212,7 +203,6 @@ export const MORE_SOUNDS: Sound[] = [
   {
     id: 'palm_wind',
     name: 'Palm Wind',
-    icon: '🌴',
     source: require('../assets/sounds/wind_through_palm_trees.mp3'),
     attributions: [
       {
@@ -228,7 +218,6 @@ export const MORE_SOUNDS: Sound[] = [
   {
     id: 'village_morning',
     name: 'Village Morning',
-    icon: '🌅',
     source: require('../assets/sounds/village_morning.mp3'),
     attributions: [
       {
@@ -244,7 +233,6 @@ export const MORE_SOUNDS: Sound[] = [
   {
     id: 'creaking_boat',
     name: 'Creaking Boat',
-    icon: '⛵',
     source: require('../assets/sounds/creaking_boat.mp3'),
     attributions: [
       {
@@ -260,7 +248,6 @@ export const MORE_SOUNDS: Sound[] = [
   {
     id: 'heartbeat',
     name: 'Heartbeat',
-    icon: '💓',
     source: require('../assets/sounds/heartbeat.mp3'),
     attributions: [
       {
@@ -276,7 +263,6 @@ export const MORE_SOUNDS: Sound[] = [
   {
     id: 'wall_clock',
     name: 'Wall Clock',
-    icon: '🕰️',
     source: require('../assets/sounds/wall_clock.mp3'),
     attributions: [
       {
@@ -292,7 +278,6 @@ export const MORE_SOUNDS: Sound[] = [
   {
     id: 'office',
     name: 'Office',
-    icon: '🏢',
     source: require('../assets/sounds/office.mp3'),
     attributions: [
       {
@@ -308,7 +293,6 @@ export const MORE_SOUNDS: Sound[] = [
   {
     id: 'quiet_conversations',
     name: 'Chatter',
-    icon: '🗣️',
     source: require('../assets/sounds/quiet_conversations.mp3'),
     attributions: [
       {
@@ -324,7 +308,6 @@ export const MORE_SOUNDS: Sound[] = [
   {
     id: 'air_travel',
     name: 'Air Travel',
-    icon: '✈️',
     source: require('../assets/sounds/air_travel.mp3'),
     attributions: [
       {
@@ -340,7 +323,6 @@ export const MORE_SOUNDS: Sound[] = [
   {
     id: 'electric_car',
     name: 'Car Ride',
-    icon: '🚙',
     source: require('../assets/sounds/electric_car.mp3'),
     attributions: [
       {
@@ -356,7 +338,6 @@ export const MORE_SOUNDS: Sound[] = [
   {
     id: 'wolves',
     name: 'Wolves',
-    icon: '🐺',
     source: require('../assets/sounds/wolves.mp3'),
     attributions: [
       {
@@ -372,80 +353,141 @@ export const MORE_SOUNDS: Sound[] = [
   {
     id: 'campfire',
     name: 'Campfire',
-    icon: '🔥',
     source: require('../assets/sounds/campfire.mp3'),
     attributions: [NOICE_GPL('Campfire')],
   },
   {
     id: 'crickets',
     name: 'Crickets',
-    icon: '🦗',
     source: require('../assets/sounds/crickets.mp3'),
     attributions: [NOICE_GPL('Crickets')],
   },
   {
     id: 'water_stream',
     name: 'Stream',
-    icon: '🏞️',
     source: require('../assets/sounds/water_stream.mp3'),
     attributions: [NOICE_GPL('Water Stream')],
   },
   {
     id: 'soft_wind',
     name: 'Soft Wind',
-    icon: '🍂',
     source: require('../assets/sounds/soft_wind.mp3'),
     attributions: [NOICE_GPL('Soft Wind')],
   },
   {
     id: 'wind_chimes',
     name: 'Wind Chimes',
-    icon: '🎐',
     source: require('../assets/sounds/wind_chimes.mp3'),
     attributions: [NOICE_GPL('Wind Chimes')],
   },
   {
     id: 'walking_in_snow',
     name: 'Snow Walk',
-    icon: '❄️',
     source: require('../assets/sounds/walking_in_snow.mp3'),
     attributions: [NOICE_GPL('Walking in Snow')],
   },
   {
     id: 'public_library',
     name: 'Library',
-    icon: '📚',
     source: require('../assets/sounds/public_library.mp3'),
     attributions: [NOICE_GPL('Public Library')],
   },
   {
     id: 'scuba_diving',
     name: 'Scuba',
-    icon: '🤿',
     source: require('../assets/sounds/scuba_diving.mp3'),
     attributions: [NOICE_GPL('Scuba Diving')],
   },
   {
     id: 'white_noise',
     name: 'White Noise',
-    icon: '🌫️',
     source: require('../assets/sounds/white_noise.mp3'),
     attributions: [NOICE_GPL('White Noise')],
   },
   {
     id: 'pink_noise',
     name: 'Pink Noise',
-    icon: '🌸',
     source: require('../assets/sounds/pink_noise.mp3'),
     attributions: [NOICE_GPL('Pink Noise')],
   },
   {
     id: 'brownian_noise',
     name: 'Brown Noise',
-    icon: '🟤',
     source: require('../assets/sounds/brownian_noise.mp3'),
     attributions: [NOICE_GPL('Brownian Noise')],
   },
 ];
 
-export const ALL_SOUNDS: Sound[] = [...FEATURED_SOUNDS, ...MORE_SOUNDS];
+/**
+ * The dial's sequence.
+ *
+ * The library is no longer three featured sounds plus an arbitrary 28: it is
+ * one continuous run, and its ORDER is the design. A drag moves the library
+ * past a fixed play head, so neighbouring positions have to sound like
+ * neighbours — otherwise the gesture is shuffling, not tuning.
+ *
+ * The gradient runs: precipitation → water bodies → air → living outdoors →
+ * close creature and body → rhythmic interior → social interior → transit
+ * drone → machine drone → pure noise, dark to bright. Rain leads because it is
+ * the product's namesake and the fresh-install default.
+ *
+ * Adding a sound means placing it in this run by ear, not appending it.
+ */
+const SEQUENCE: readonly string[] = [
+  // precipitation
+  'rain',
+  'thunder',
+  // water bodies
+  'creaking_boat',
+  'seashore',
+  'water_stream',
+  'scuba_diving',
+  'walking_in_snow',
+  // air
+  'wind',
+  'soft_wind',
+  'palm_wind',
+  'wind_chimes',
+  // living outdoors
+  'birds',
+  'village_morning',
+  'crickets',
+  'night',
+  'wolves',
+  'campfire',
+  // close creature and body
+  'purring_cat',
+  'heartbeat',
+  // rhythmic and quiet interior
+  'wall_clock',
+  'public_library',
+  'office',
+  // social interior
+  'quiet_conversations',
+  'coffee_shop',
+  // transit
+  'train',
+  'electric_car',
+  'air_travel',
+  // machine and pure noise, dark to bright
+  'fan',
+  'brownian_noise',
+  'pink_noise',
+  'white_noise',
+];
+
+const BY_ID = new Map(
+  [...FEATURED_SOUNDS, ...MORE_SOUNDS].map((s) => [s.id, s]),
+);
+
+export const ALL_SOUNDS: Sound[] = SEQUENCE.map((id) => {
+  const sound = BY_ID.get(id);
+  if (!sound) throw new Error(`SEQUENCE names an unknown sound: ${id}`);
+  return sound;
+});
+
+if (ALL_SOUNDS.length !== BY_ID.size) {
+  throw new Error(
+    `SEQUENCE covers ${ALL_SOUNDS.length} of ${BY_ID.size} sounds; every sound must be placed.`,
+  );
+}
