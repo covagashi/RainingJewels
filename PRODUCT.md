@@ -76,9 +76,17 @@ regression, not a tradeoff.
 
 Confirmed functionality:
 
-- 31 looping ambient sounds. Rain, Thunder, and Wind are featured; the
-  remaining 28 sit under a "More sounds" section.
-- One sound plays at a time.
+- 31 looping ambient sounds in **one continuous authored sequence** — the Dial.
+  There is no featured row and no "More sounds" section; those dissolved on
+  2026-07-31. The order is a design decision, not a data order: the run goes
+  precipitation → water bodies → air → living outdoors → close body → rhythmic
+  interior → social interior → transit → machine → pure noise, dark to bright,
+  so that neighbouring positions sound like neighbours and dragging reads as
+  tuning rather than shuffling. It lives in `SEQUENCE` in `src/sounds.ts` and
+  every sound must be placed in it; the module throws if one is missing.
+- One sound plays at a time. Switching crossfades between two audio voices.
+- Settling the dial on a new sound starts playback, even from paused. Cold
+  start still restores silently.
 - Sleep timer with fade-out at 15 / 30 / 60 minutes.
 - Volume control.
 - Automatic screen dimming after 2 minutes of playback (`expo-brightness`).
@@ -117,18 +125,25 @@ Explicitly undecided / unrecorded:
 
 Recorded so later work does not reopen them.
 
-- **Interaction model — "the Dial" (2026-07-30).** The featured row and the
-  28-tile horizontal strip are to be replaced by a single continuous vertical
-  surface: the library passes a fixed play head as the user drags, and audio
-  crossfades once the drag settles. Chosen over a library sheet (cheaper, but
-  leaves the app category-interchangeable) and over two-sound layering (which
-  would have cost the radical-simplicity claim). Costs zero positioning
-  claims and keeps one sound at a time.
-  Two conditions are part of the feature, not follow-ups: it must **not**
-  audition sounds while dragging — crossfade on settle only — and it must
-  expose a parallel `accessibilityRole="adjustable"` with increment and
-  decrement actions, or 31 sounds become unreachable to screen readers.
-  Requires a second audio player instance; the current engine is single-voice.
+- **Interaction model — "the Dial" (decided 2026-07-30, BUILT 2026-07-31).**
+  The featured row and the 28-tile horizontal strip are gone. The library is
+  one continuous vertical run passing a fixed play head; audio crossfades once
+  the drag settles. Chosen over a library sheet (cheaper, but left the app
+  category-interchangeable) and over two-sound layering (which would have cost
+  the radical-simplicity claim). Cost zero positioning claims and keeps one
+  sound at a time.
+  Both conditions shipped as part of the feature: it does **not** audition
+  while dragging (a 350ms settle debounce, cancelled by any new drag, with
+  `commitSound` as the single door to audio), and the run exposes
+  `accessibilityRole="adjustable"` with increment/decrement so a screen-reader
+  user steps it without a drag.
+  Implementation notes worth keeping: the drag rides `Animated.ScrollView`
+  with `snapToInterval` rather than `Gesture.Pan`, deliberately —
+  `react-native-gesture-handler` is not a dependency, and native snapping
+  gives platform-correct fling physics, which an `adaptive` product wants.
+  Two `useAudioPlayer()` voices cross-ramp on an equal-power curve;
+  `playing` reads from both voices, because reading only the active one made
+  the app announce "Paused" mid-crossfade.
 
 - **Session display — "recede, don't disappear" (2026-07-30).** The full-screen
   black scrim is to be removed and the interface is to recede into a low-

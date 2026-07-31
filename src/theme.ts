@@ -25,15 +25,6 @@ export const SCRIM = 'rgba(0,0,0,0.65)';
 
 export const BACKGROUND_GRADIENT = [BG_TOP, BG_BOTTOM] as const;
 
-/**
- * Transparent stops for the horizontal scroll fade. Must resolve to BG_TOP,
- * not a fourth near-black, or the fade bands against the real backdrop.
- */
-export const SCROLL_FADE_GRADIENT = [
-  'rgba(13,15,20,0)',
-  'rgba(13,15,20,0.92)',
-] as const;
-
 /* -------------------------------------------------------------------------
  * Accent
  * ---------------------------------------------------------------------- */

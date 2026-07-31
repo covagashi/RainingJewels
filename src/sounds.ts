@@ -30,7 +30,8 @@ const NOICE_GPL = (soundName: string): SoundAttribution => ({
   licenseUrl: GPL_3,
 });
 
-/** The three original sounds, shown as the featured row. */
+/** Noice's own GPL-3.0 recordings. Kept as a data group only — the UI has no
+ * featured row since the Dial landed; ALL_SOUNDS/SEQUENCE is the running order. */
 export const FEATURED_SOUNDS: Sound[] = [
   {
     id: 'rain',
@@ -53,7 +54,8 @@ export const FEATURED_SOUNDS: Sound[] = [
 ];
 
 /**
- * Additional sounds shown in the "More sounds" section.
+ * The remaining sounds. There is no "More sounds" section any more — this is a
+ * data group, and SEQUENCE below decides where each one sits in the run.
  *
  * Sourced from the open-source Noice sound library
  * (https://trynoice.com, https://github.com/trynoice); original recordings
@@ -416,4 +418,76 @@ export const MORE_SOUNDS: Sound[] = [
   },
 ];
 
-export const ALL_SOUNDS: Sound[] = [...FEATURED_SOUNDS, ...MORE_SOUNDS];
+/**
+ * The dial's sequence.
+ *
+ * The library is no longer three featured sounds plus an arbitrary 28: it is
+ * one continuous run, and its ORDER is the design. A drag moves the library
+ * past a fixed play head, so neighbouring positions have to sound like
+ * neighbours — otherwise the gesture is shuffling, not tuning.
+ *
+ * The gradient runs: precipitation → water bodies → air → living outdoors →
+ * close creature and body → rhythmic interior → social interior → transit
+ * drone → machine drone → pure noise, dark to bright. Rain leads because it is
+ * the product's namesake and the fresh-install default.
+ *
+ * Adding a sound means placing it in this run by ear, not appending it.
+ */
+const SEQUENCE: readonly string[] = [
+  // precipitation
+  'rain',
+  'thunder',
+  // water bodies
+  'creaking_boat',
+  'seashore',
+  'water_stream',
+  'scuba_diving',
+  'walking_in_snow',
+  // air
+  'wind',
+  'soft_wind',
+  'palm_wind',
+  'wind_chimes',
+  // living outdoors
+  'birds',
+  'village_morning',
+  'crickets',
+  'night',
+  'wolves',
+  'campfire',
+  // close creature and body
+  'purring_cat',
+  'heartbeat',
+  // rhythmic and quiet interior
+  'wall_clock',
+  'public_library',
+  'office',
+  // social interior
+  'quiet_conversations',
+  'coffee_shop',
+  // transit
+  'train',
+  'electric_car',
+  'air_travel',
+  // machine and pure noise, dark to bright
+  'fan',
+  'brownian_noise',
+  'pink_noise',
+  'white_noise',
+];
+
+const BY_ID = new Map(
+  [...FEATURED_SOUNDS, ...MORE_SOUNDS].map((s) => [s.id, s]),
+);
+
+export const ALL_SOUNDS: Sound[] = SEQUENCE.map((id) => {
+  const sound = BY_ID.get(id);
+  if (!sound) throw new Error(`SEQUENCE names an unknown sound: ${id}`);
+  return sound;
+});
+
+if (ALL_SOUNDS.length !== BY_ID.size) {
+  throw new Error(
+    `SEQUENCE covers ${ALL_SOUNDS.length} of ${BY_ID.size} sounds; every sound must be placed.`,
+  );
+}
