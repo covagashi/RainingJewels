@@ -15,6 +15,13 @@ const SIGNING_CONFIG = `
         }`;
 
 module.exports = function withReleaseSigning(config) {
+  // On EAS Build the keystore comes from EAS credentials, and EAS applies it to
+  // the generated build.gradle itself. Rewriting the release signing config here
+  // would fight that, so leave the stock template alone in the cloud.
+  if (process.env.EAS_BUILD === 'true') {
+    return config;
+  }
+
   return withAppBuildGradle(config, (cfg) => {
     let gradle = cfg.modResults.contents;
 

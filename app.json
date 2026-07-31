@@ -53,6 +53,12 @@
         }
       ],
       "./plugins/withReleaseSigning"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "c1336b7d-7029-424d-98df-7f029416322e"
+      }
+    },
+    "owner": "covagashi"
   }
 }
