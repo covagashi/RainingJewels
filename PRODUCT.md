@@ -103,16 +103,31 @@ Technical constraints:
 - Targets Android 16 (API 36), meeting the Google Play target-API requirement
   effective 2026-08-31.
 - Releases update the existing Play listing `com.covaga.jewelrain`, carried
-  over from a previous Flutter implementation of the same app.
+  over from a previous Flutter implementation of the same app. Production on
+  Play was **1.0.5 (versionCode 6)** as of 2026-07-31; this Expo implementation
+  ships as **1.1.0 (versionCode 7)**, the first release off the EAS path.
+  `eas.json` sets `appVersionSource: "local"`, so the versionCode is whatever
+  `app.json` says and moves as a reviewable diff — it is never bumped by the
+  build server, and Play rejects any AAB reusing a code.
 
 Explicitly undecided / unrecorded:
 
 - iOS release status and timeline.
-- Signing: as of 2026-07-22 an upload-key reset was in progress because the
-  original Flutter-era upload keystore is not available. Whether Google has
-  since approved the replacement is not recorded here and must be confirmed
-  before a release is planned.
-  The **mechanism** is in place regardless: `plugins/withReleaseSigning.js`
+- **Signing — resolved 2026-07-31.** The upload-key reset begun on 2026-07-22
+  (the original Flutter-era upload keystore was not available) has been
+  **approved by Google**. The active upload key is `rain.jks`, alias `upload`,
+  SHA-1 `AC:A2:CA:50:79:A4:B2:EB:1A:17:D1:AE:16:A8:B6:0C:71:6E:5A:11`. That
+  fingerprint is the check to run against any release artifact before
+  submitting; anything else means the build was signed by something other than
+  the registered upload key.
+  There are now **two** release paths, and they must not both act on one build:
+  a local one (Gradle properties, below) and EAS Build, which holds the same
+  keystore in its own credential store for `@covagashi/jewel-rain`. Because
+  `withReleaseSigning` rewrites the release buildType's `signingConfig` line
+  and EAS applies its credentials to the generated `build.gradle`, the plugin
+  is a **no-op when `EAS_BUILD` is set** — without that guard the cloud build
+  can silently ship a debug-signed AAB.
+  The local **mechanism** is unchanged: `plugins/withReleaseSigning.js`
   (added 2026-07-28) re-injects the release signing config on every prebuild,
   because `android/` is generated and gitignored. Credentials come from Gradle
   properties — `JEWELRAIN_STORE_FILE`, `JEWELRAIN_STORE_PASSWORD`,
