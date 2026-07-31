@@ -112,6 +112,15 @@ Explicitly undecided / unrecorded:
   original Flutter-era upload keystore is not available. Whether Google has
   since approved the replacement is not recorded here and must be confirmed
   before a release is planned.
+  The **mechanism** is in place regardless: `plugins/withReleaseSigning.js`
+  (added 2026-07-28) re-injects the release signing config on every prebuild,
+  because `android/` is generated and gitignored. Credentials come from Gradle
+  properties — `JEWELRAIN_STORE_FILE`, `JEWELRAIN_STORE_PASSWORD`,
+  `JEWELRAIN_KEY_ALIAS`, `JEWELRAIN_KEY_PASSWORD` — set in
+  `~/.gradle/gradle.properties` or passed with `-P`, and never committed. With
+  those absent the build falls back to Expo's debug signing, so a local
+  `assembleRelease` still works without the keystore. That fallback is why the
+  test APKs on the preview releases are debug-signed.
 - **Copy conflict — resolved 2026-07-30.** All in-app copy now names the
   confirmed primary job. The welcome tagline reads "Ambient sounds for
   relaxing and meditating", its CTA reads "Choose a sound", and the player
