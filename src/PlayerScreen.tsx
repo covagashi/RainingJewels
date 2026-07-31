@@ -95,7 +95,6 @@ import {
   AUDIO_FADE_IN_MS,
   BACKGROUND_GRADIENT,
   BG_TOP,
-  DIAL_EDGE_FADE,
   DIVIDER,
   DURATION_BASE,
   DURATION_SLOW,
@@ -259,13 +258,19 @@ const DIAL_HEAD_ANCHOR = (DIAL_ROWS_ABOVE + 0.5) / DIAL_VISIBLE_ROWS;
 /**
  * Distance, in rows, over which a name recedes to the back of the run.
  *
- * Depth is carried by scale alone. Nothing inside the window fades below
- * DIAL_NEIGHBOUR_OPACITY, because opacity 0 does not disable hit testing in
- * React Native — and neither does 0.07. `onRowPress` commits audio on the spot,
- * so a row you cannot read is a row that can switch the sound out from under
- * you when your thumb lands an inch wide. The ramp used to run to zero at the
- * edge of the window, which put the two outermost rows at 1.85:1 and 1.17:1 on
- * BG_TOP while leaving them fully pressable.
+ * Depth is carried by scale alone. No row that sits whole in the window fades
+ * below DIAL_NEIGHBOUR_OPACITY, because opacity 0 does not disable hit testing
+ * in React Native — and neither does 0.07. `onRowPress` commits audio on the
+ * spot, so a row you cannot read is a row that can switch the sound out from
+ * under you when your thumb lands an inch wide. This ramp used to run to zero at
+ * the edge of the window, which put the two outermost rows at 1.85:1 and 1.17:1
+ * on BG_TOP while leaving them fully pressable.
+ *
+ * The one exception is a row on its way out — see the edge factor in `DialRow`,
+ * which keys off distance from the *window edge* rather than from the head and
+ * only ramps across the last half-pitch of travel, where the ScrollView's clip
+ * is already cutting the row through the middle. It never touches a row a thumb
+ * could reasonably be aimed at, and at rest it touches nothing at all.
  */
 const DIAL_DEPTH_SPAN = DIAL_ROWS_ABOVE + 0.5;
 /**
@@ -590,6 +595,13 @@ interface DialRowProps {
   sound: Sound;
   index: number;
   pitch: number;
+  /**
+   * The window's geometry, measured. Both feed the edge factor below, and both
+   * move only with layout and fontScale — never with the drag — so the memo
+   * still holds across a whole gesture.
+   */
+  headOffset: number;
+  windowHeight: number;
   accent: boolean;
   scrollY: SharedValue<number>;
   recede: SharedValue<number>;
@@ -601,6 +613,8 @@ const DialRow = React.memo(function DialRow({
   sound,
   index,
   pitch,
+  headOffset,
+  windowHeight,
   accent,
   scrollY,
   recede,
@@ -631,12 +645,54 @@ const DialRow = React.memo(function DialRow({
       Extrapolation.CLAMP,
     );
 
+    /**
+     * The window's edges, softened in the type and softened *late*.
+     *
+     * Two LinearGradient strips used to sit over the dial, painting an opaque
+     * BG_TOP that dissolved one row in. But the backdrop is not BG_TOP — it is
+     * BACKGROUND_GRADIENT, and the dial spans roughly 14%–62% of the screen, so
+     * at its lower edge the real backdrop is meaningfully darker than the strip.
+     * It read as a lighter band across the full width, and being opaque it also
+     * cut the ambient rain, which is a full-screen layer behind everything.
+     * Sampling the gradient at that y is not the fix either: it buys the band
+     * back by adding near-blacks to a palette that was deliberately collapsed
+     * to three.
+     *
+     * So the fade is back in the type. The earlier fade was not wrong to exist,
+     * it was wrong to start inside the window — it reached zero at the boundary,
+     * which is what put pressable rows below any contrast floor. This factor is
+     * distance from the *window edge*, not from the head: 1 for every row still
+     * sitting whole in the window, ramping to 0 only across the final half-pitch
+     * of travel, which is exactly the travel over which the ScrollView's clip
+     * eats the row. Measured: at the window edge the name is scaled to about
+     * 19dp in a 65dp row, so the clip first touches a glyph at ~9dp of centre
+     * travel, where this factor is already down to ~0.29 and the row is sitting
+     * at ~0.10 absolute. There is no cut worth seeing by the time there is one.
+     *
+     * At rest it is 1 for every row: `headOffset` lands the outermost centres
+     * exactly half a pitch from each edge (195 = 3 × 65 in a 6 × 65 window), so
+     * nothing is dimmed until a finger moves the run. A row the factor does dim
+     * is still pressable — opacity never disabled hit testing here — but it was
+     * equally pressable under an opaque strip that hid it completely, so this is
+     * strictly the more honest of the two.
+     *
+     * Not gated on reduced motion. A clip line is an artefact of position, not
+     * an animation, and a reduced-motion reader is owed uncut type just as much.
+     */
+    const centre = headOffset + index * pitch - scrollY.value + pitch / 2;
+    const edge = interpolate(
+      Math.min(centre, windowHeight - centre),
+      [0, pitch / 2],
+      [0, 1],
+      Extrapolation.CLAMP,
+    );
+
     if (reducedMotion) {
       // Instant in position: no continuous scale ramp riding the finger, and
       // emphasis is a step rather than a slide. The run still moves — direct
       // manipulation is not animation — it just stops interpolating.
       const base = distance < 0.5 ? 1 : DIAL_NEIGHBOUR_OPACITY;
-      return { opacity: base * sessionMix, transform: [{ scale: 1 }] };
+      return { opacity: base * sessionMix * edge, transform: [{ scale: 1 }] };
     }
 
     // Floored at the neighbour step: see DIAL_DEPTH_SPAN. Everything past the
@@ -653,7 +709,7 @@ const DialRow = React.memo(function DialRow({
       [1, DIAL_NEIGHBOUR_SCALE, DIAL_MIN_SCALE],
       Extrapolation.CLAMP,
     );
-    return { opacity: base * sessionMix, transform: [{ scale }] };
+    return { opacity: base * sessionMix * edge, transform: [{ scale }] };
   });
 
   return (
@@ -1861,6 +1917,8 @@ export default function PlayerScreen() {
                       sound={sound}
                       index={i}
                       pitch={pitch}
+                      headOffset={headOffset}
+                      windowHeight={dialHeight}
                       accent={i === selectedIndex && isAudible}
                       scrollY={scrollY}
                       recede={recede}
@@ -1871,28 +1929,16 @@ export default function PlayerScreen() {
               </Animated.ScrollView>
             </View>
 
-            {/* The window's edges, masked rather than faded.
-                Every row holds DIAL_NEIGHBOUR_OPACITY right up to the boundary
-                of the ScrollView, which clips. At rest that is invisible —
-                headOffset lands the rows flush — but under a finger it showed
-                as two hard lines slicing 34pt names in half. The fix belongs
-                here and not in the opacity ramp: the type stays legible and
-                stays hit-testable at exactly the value it had, and the
-                softening is done by the background dissolving over it. */}
-            <LinearGradient
-              colors={DIAL_EDGE_FADE}
-              style={[styles.dialEdge, { top: 0, height: pitch }]}
-              pointerEvents="none"
-            />
-            <LinearGradient
-              colors={DIAL_EDGE_FADE}
-              // Same two stops, run upward, so the opaque end is at the bottom.
-              // Reversing the array instead would widen the token's type.
-              start={{ x: 0.5, y: 1 }}
-              end={{ x: 0.5, y: 0 }}
-              style={[styles.dialEdge, { bottom: 0, height: pitch }]}
-              pointerEvents="none"
-            />
+            {/* No edge masks.
+                Two gradient strips used to paint an opaque BG_TOP over the top
+                and bottom of the window. The backdrop here is a gradient, not
+                BG_TOP, so low on the screen they read as a lighter band across
+                the full width — and being opaque they punched a hole in the
+                ambient rain, which passes behind this whole zone. The edges are
+                softened in the type instead: see the edge factor in DialRow,
+                which is 1 for every row that sits whole in the window and only
+                fades the sliver the ScrollView is already cutting. Nothing is
+                painted over the run, so the rain is continuous through it. */}
 
             <View
               style={[styles.headMark, { top: headOffset, height: pitch }]}
@@ -2203,16 +2249,6 @@ const styles = StyleSheet.create({
   dialZone: {
     alignSelf: 'stretch',
     flexShrink: 1,
-  },
-  /**
-   * One row deep at every text size, because `height` is set from the live
-   * `pitch` at the call site: the thing being softened is a row of type, so
-   * the mask is measured in rows rather than in pixels someone liked.
-   */
-  dialEdge: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
   },
   dialRow: {
     justifyContent: 'center',

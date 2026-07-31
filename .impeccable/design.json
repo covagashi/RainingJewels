@@ -1,0 +1,162 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-31T00:00:00Z",
+  "title": "Design System: Jewel Rain",
+  "extensions": {
+    "colorMeta": {
+      "rain-blue": {
+        "role": "primary",
+        "displayName": "Muted Rain Blue",
+        "canonical": "#9CC2D4",
+        "tonalRamp": ["#101a1f", "#1b2c35", "#2a444f", "#3d616f", "#5b8494", "#7ba5b6", "#9CC2D4", "#c6dde8"]
+      },
+      "bg-top": {
+        "role": "neutral",
+        "displayName": "Near-Black Field, Top",
+        "canonical": "#0D0F14",
+        "tonalRamp": ["#050608", "#0D0F14", "#171a22", "#232733", "#333846", "#4a505f", "#6b7280", "#9aa1ad"]
+      },
+      "bg-bottom": {
+        "role": "neutral",
+        "displayName": "Near-Black Field, Bottom",
+        "canonical": "#060709",
+        "tonalRamp": ["#030304", "#060709", "#0e1013", "#181b20", "#262a31", "#3a3f48", "#585e69", "#868c98"]
+      },
+      "bg-sheet": {
+        "role": "neutral",
+        "displayName": "Sheet",
+        "canonical": "#14171E",
+        "tonalRamp": ["#080a0d", "#14171E", "#20242e", "#2e3340", "#3f4554", "#565d6f", "#767d8f", "#a3a9b6"]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "The name at the head of the dial. The only display-scale type in the app, which is what makes the hierarchy unambiguous."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "The status line and sheet paragraphs. Platform system face — it renders small text better under the user's own size settings."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Anything the user operates: chips, dock label, attribution rows."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      { "name": "duration-fast", "value": "150ms", "purpose": "Micro state changes." },
+      { "name": "duration-base", "value": "250ms", "purpose": "Default transitions. Also the interface returning from the session state — the user's finger is already on the glass." },
+      { "name": "duration-slow", "value": "400ms", "purpose": "Ambient layer opacity." },
+      { "name": "session-recede", "value": "3200ms", "purpose": "The interface retiring into the session state. Deliberately not duration-slow: this is a room dimming, not a UI transition." },
+      { "name": "audio-onset", "value": "1100ms", "purpose": "Volume ramp from silence. Long enough to be a swell, short enough that the status line is not lying." },
+      { "name": "audio-crossfade", "value": "320ms out / 900ms in", "purpose": "Switching sounds. Equal-power curve across two voices." },
+      { "name": "settle-debounce", "value": "350ms", "purpose": "Delay between the dial coming to rest and audio committing. Cancelled by any new drag — this is what makes auditioning structurally impossible." },
+      { "name": "audio-fade-out", "value": "30s", "purpose": "The stop timer rides the volume down across its final 30 seconds rather than cutting." }
+    ],
+    "breakpoints": []
+  },
+  "components": [
+    {
+      "name": "Transport, paused",
+      "kind": "button",
+      "refersTo": "transport-paused",
+      "description": "The state the app opens into every session, so it carries the strongest treatment in the system.",
+      "html": "<button class=\"ds-transport-paused\" aria-label=\"Play Village Morning\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polygon points=\"6 3 20 12 6 21 6 3\"/></svg></button>",
+      "css": ".ds-transport-paused { width: 76px; height: 76px; border-radius: 999px; background: #ffffff; color: #0D0F14; border: 2px solid #ffffff; display: grid; place-items: center; cursor: pointer; transition: transform 150ms ease; } .ds-transport-paused:active { transform: scale(0.96); } .ds-transport-paused:focus-visible { outline: 2px solid #9CC2D4; outline-offset: 4px; }"
+    },
+    {
+      "name": "Transport, playing",
+      "kind": "button",
+      "refersTo": "transport-playing",
+      "description": "Four channels move together — fill, ring, glyph shape and glyph colour — plus the status word. None of them is colour alone.",
+      "html": "<button class=\"ds-transport-playing\" aria-label=\"Pause Village Morning\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\"><rect x=\"6\" y=\"4\" width=\"4\" height=\"16\"/><rect x=\"14\" y=\"4\" width=\"4\" height=\"16\"/></svg></button>",
+      "css": ".ds-transport-playing { width: 76px; height: 76px; border-radius: 999px; background: rgba(156,194,212,0.32); color: #9CC2D4; border: 3px solid #9CC2D4; display: grid; place-items: center; cursor: pointer; transition: transform 150ms ease; } .ds-transport-playing:active { transform: scale(0.96); } .ds-transport-playing:focus-visible { outline: 2px solid #9CC2D4; outline-offset: 4px; }"
+    },
+    {
+      "name": "Dial row, head",
+      "kind": "custom",
+      "refersTo": "dial-row-head",
+      "description": "The reading. Flanked by the head ticks; takes the accent only when audio is genuinely audible.",
+      "html": "<div class=\"ds-dial-head\"><span class=\"ds-tick\"></span><svg width=\"32\" height=\"32\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\"><path d=\"M17 18a5 5 0 0 0-10 0\"/><line x1=\"12\" y1=\"2\" x2=\"12\" y2=\"9\"/><line x1=\"2\" y1=\"18\" x2=\"22\" y2=\"18\"/></svg><span class=\"ds-dial-name\">Village Morning</span><span class=\"ds-tick\"></span></div>",
+      "css": ".ds-dial-head { display: flex; align-items: center; gap: 12px; color: #ffffff; height: 65px; } .ds-dial-name { font-family: Manrope, system-ui, sans-serif; font-weight: 300; font-size: 34px; line-height: 1.2; letter-spacing: -0.3px; } .ds-tick { flex: 1; max-width: 32px; height: 2px; border-radius: 999px; background: rgba(255,255,255,0.35); }"
+    },
+    {
+      "name": "Dial row, neighbour",
+      "kind": "custom",
+      "refersTo": "dial-row-neighbour",
+      "description": "The same text scaled and dimmed from the scroll offset on the UI thread. Depth is carried by scale; opacity holds a floor so no pressable row is invisible.",
+      "html": "<div class=\"ds-dial-neighbour\"><svg width=\"23\" height=\"23\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\"><path d=\"M16 8a6 6 0 0 1 6 6\"/><circle cx=\"9\" cy=\"12\" r=\"4\"/></svg><span class=\"ds-dial-neighbour-name\">Crickets</span></div>",
+      "css": ".ds-dial-neighbour { display: flex; align-items: center; justify-content: center; gap: 12px; height: 65px; color: rgba(255,255,255,0.34); } .ds-dial-neighbour-name { font-family: Manrope, system-ui, sans-serif; font-weight: 300; font-size: 24px; line-height: 1.2; letter-spacing: -0.3px; }"
+    },
+    {
+      "name": "Timer chip, unselected",
+      "kind": "chip",
+      "refersTo": "timer-chip",
+      "description": "Pill, glass fill, glass border. 48dp tall and 64dp minimum wide, always.",
+      "html": "<button class=\"ds-chip\" role=\"radio\" aria-checked=\"false\">30m</button>",
+      "css": ".ds-chip { min-height: 48px; min-width: 64px; padding: 0 16px; border-radius: 999px; background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.35); color: rgba(255,255,255,0.7); font-family: system-ui, sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; } .ds-chip:focus-visible { outline: 2px solid #9CC2D4; outline-offset: 2px; }"
+    },
+    {
+      "name": "Timer chip, selected",
+      "kind": "chip",
+      "refersTo": "timer-chip-selected",
+      "description": "Heavier fill and border PLUS a filled dot. The fill step alone measures ~2.1:1 and cannot carry state on a screen that dims itself.",
+      "html": "<button class=\"ds-chip-selected\" role=\"radio\" aria-checked=\"true\">Off<span class=\"ds-dot\"></span></button>",
+      "css": ".ds-chip-selected { position: relative; min-height: 48px; min-width: 64px; padding: 0 16px; border-radius: 999px; background: rgba(255,255,255,0.26); border: 1px solid rgba(255,255,255,0.7); color: #ffffff; font-family: system-ui, sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; } .ds-dot { position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%); width: 6px; height: 6px; border-radius: 999px; background: #ffffff; }"
+    },
+    {
+      "name": "Control panel",
+      "kind": "custom",
+      "refersTo": "control-panel",
+      "description": "Timer, volume and the credits entry point. Closed, it is pointer-events: none and hidden from assistive tech — no invisible-but-live control.",
+      "html": "<div class=\"ds-panel\"><div class=\"ds-panel-handle\"></div><div class=\"ds-panel-label\">Stop after</div></div>",
+      "css": ".ds-panel { background: #14171E; border-radius: 28px 28px 0 0; padding: 24px; color: rgba(255,255,255,0.7); font-family: system-ui, sans-serif; font-size: 14px; } .ds-panel-handle { width: 40px; height: 4px; border-radius: 999px; background: rgba(255,255,255,0.35); margin: 0 auto 16px; } .ds-panel-label { color: rgba(255,255,255,0.7); }"
+    },
+    {
+      "name": "Attribution row",
+      "kind": "custom",
+      "refersTo": "credits-sheet",
+      "description": "One row-level target with one accessible name, plus a separate licence target because it points somewhere genuinely different. Never truncated: the sheet is a legal obligation.",
+      "html": "<div class=\"ds-attribution\"><a class=\"ds-attribution-source\" href=\"#\">oceanwavescrushing.wav <span class=\"ds-dim\">by</span> Luftrum</a><a class=\"ds-licence\" href=\"#\">CC BY 3.0</a></div>",
+      "css": ".ds-attribution { display: flex; align-items: center; gap: 8px; margin-top: 8px; } .ds-attribution-source { flex: 1 1 0; min-width: 0; min-height: 48px; display: flex; align-items: center; color: #9CC2D4; font-family: system-ui, sans-serif; font-size: 13px; text-decoration: underline; } .ds-licence { flex: 0 0 auto; min-width: 48px; min-height: 48px; display: flex; align-items: center; justify-content: flex-end; color: #9CC2D4; font-size: 13px; text-decoration: underline; } .ds-dim { color: rgba(255,255,255,0.7); text-decoration: none; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Weather Station",
+    "overview": "Instrument marks over weather seen through glass. The player is not a menu of sounds; it is a reading. A fixed head sits at the centre of the screen with two drawn ticks either side of it, and the library — one continuous run of 31 recordings in an authored order — moves past that head under the thumb. The name at the head is the reading. Behind all of it, ambient rain falls the full height of the screen, continuously, whether or not anything is playing.\n\nThe system is monochrome by commitment, not by timidity. A near-black vertical gradient, a ramp of white opacities, and exactly one colour — a muted rain blue that is earned rather than applied: it appears only when audio is genuinely audible, never when playback has merely been requested. On a surface that dims itself mid-session and asks for nothing, colour is the loudest thing available, so it is spent on the one fact the user cannot otherwise verify.\n\nDensity is deliberately low and gets lower. Two minutes into playback the interface recedes to a twelve-percent ghost while the head, the transport and the weather stay — and every faded control remains visible and pressable, so receding costs the user nothing but attention. What survives that reduction is the definition of what matters here.",
+    "keyCharacteristics": [
+      "One accent, earned by audible sound, never decorative",
+      "The library's order is design; adjacency is by ear",
+      "Depth from scale and opacity, not from shadow",
+      "Nothing interactive below 48dp, including under a transform",
+      "Text is never clipped to protect a box; the box moves instead",
+      "The interface recedes rather than disappears"
+    ],
+    "rules": [
+      { "name": "The Earned Accent Rule", "body": "The accent is never applied to indicate intent, only to report fact. Playback requested is not playback heard. If you cannot point at the measurable condition your accent reports, it is decoration and does not belong.", "section": "colors" },
+      { "name": "The Gradient Is The Surface Rule", "body": "The field is a vertical gradient, so bg-top is only correct at the top of the screen. Never paint an opaque near-black over content to mask, fade or clip — it will band, and it will occlude the weather layer behind it. Solve edges in the content's own opacity.", "section": "colors" },
+      { "name": "The Three Blacks Rule", "body": "There are exactly three near-blacks: bg-top, bg-bottom, bg-sheet. The system once carried five; two were removed at cost. A fourth is a regression, whatever it is for.", "section": "colors" },
+      { "name": "The Loaded Weights Rule", "body": "A font token may name only a weight App.tsx actually loads. A token naming an unloaded face falls back to the system font at every call site while reading as verified — 400Regular was exactly that trap. Add the weight to useFonts before adding the token.", "section": "typography" },
+      { "name": "The Box Moves Rule", "body": "Text is never capped, truncated or ellipsised to protect a layout. numberOfLines appears nowhere in this codebase, deliberately. Boxes grow with fontScale (clamped at 1.6x so a 200% tile cannot push the run off screen); type does not shrink to fit them.", "section": "typography" },
+      { "name": "The 48 Floor Rule", "body": "Nothing interactive is smaller than 48dp in either axis, including its padding — and including under a transform. Both platforms hit-test in transformed space, so a scale on a row container shrinks its hit box invisibly. Put the transform on an inner content view and leave the target at full pitch.", "section": "layout" },
+      { "name": "The 8 Gap Rule", "body": "Adjacent touch targets never touch. Eight points minimum between them, or a mis-tap is the design's fault.", "section": "layout" }
+    ],
+    "dos": [
+      "Do spend the accent only on measured fact. isAudible is the gate.",
+      "Do give every selected state a second, non-colour channel.",
+      "Do put transforms on inner content, never on a hit target.",
+      "Do let boxes grow with fontScale and let text wrap.",
+      "Do gate every animation on useReducedMotion() — and remember that reduced motion means reduce motion, not snap: a cross-fade with no translation is the correct fallback, and a transition that jumps in one frame is worse for the user it was meant to protect.",
+      "Do state a deliberate accessibility deviation plainly in the code, with the reason and the equivalent path named. The dial's rows at distance 2 and beyond are such a deviation."
+    ],
+    "donts": [
+      "Don't add a fourth near-black, for any reason, including masking.",
+      "Don't paint opaque colour over content to fade or clip an edge.",
+      "Don't claim conformance in a comment without measuring. A comment that misstates a contrast floor is worse than the deviation it covers, because the next person trusts it instead of measuring.",
+      "Don't let an element be invisible and interactive at the same time. Opacity 0 does not disable hit testing.",
+      "Don't use numberOfLines to make text fit.",
+      "Don't introduce a second colour. If something needs to stand out and the accent is taken, the answer is weight, scale or space."
+    ]
+  }
+}
