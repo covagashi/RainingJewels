@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Welcome — Raining Jewels</title>
+    <link rel="stylesheet" href="shared.css" />
+  </head>
+  <body>
+    <div class="phone">
+      <div class="status-bar">
+        <span>9:41</span>
+        <span class="right">●●●●  100%</span>
+      </div>
+      <div class="rain" aria-hidden="true" id="rain"></div>
+      <div class="welcome">
+        <img class="picto" src="picto-light.png" alt="" />
+        <div class="title">
+          <span class="light">Raining </span><span class="bold">Jewels.</span>
+        </div>
+        <p class="subtitle">Ambient sounds for relaxing and meditating</p>
+        <div class="cta">Choose a sound</div>
+      </div>
+      <div class="home-indicator"></div>
+    </div>
+    <script>
+      const rain = document.getElementById('rain');
+      for (let i = 0; i < 42; i++) {
+        const d = document.createElement('div');
+        d.className = 'drop';
+        d.style.left = Math.random() * 100 + '%';
+        d.style.top = Math.random() * 100 + '%';
+        d.style.height = 24 + Math.random() * 48 + 'px';
+        d.style.opacity = 0.15 + Math.random() * 0.45;
+        rain.appendChild(d);
+      }
+    </script>
+  </body>
+</html>

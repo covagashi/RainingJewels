@@ -57,6 +57,28 @@ generate a new keystore.
 Because the app is GPL-3.0, keep this repository public (or otherwise offer
 the source) and keep the license notice in the app's credits screen.
 
+## Releasing to the App Store
+
+iOS uses the same product id (`com.covaga.jewelrain`). Full listing copy,
+privacy policy, and App Store screenshots live under `store/ios/`.
+
+```bash
+# Listing guide + copy-paste texts
+open store/ios/listing/APP_STORE.md
+
+# Regenerate store screenshots (6.7" and 6.9")
+node store/ios/screenshots/render.mjs
+
+# Production IPA (requires Apple Developer Program + EAS iOS credentials)
+npx eas build -p ios --profile production
+
+# Upload to App Store Connect (set ascAppId in eas.json first)
+npx eas submit -p ios --latest
+```
+
+Host `store/ios/listing/privacy-policy.html` on a public URL before submit —
+App Store Connect requires a Privacy Policy URL.
+
 ## Sound credits
 
 The sounds are sourced from the open-source

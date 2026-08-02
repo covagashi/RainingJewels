@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Dial — Raining Jewels</title>
+    <link rel="stylesheet" href="shared.css" />
+  </head>
+  <body>
+    <div class="phone">
+      <div class="status-bar">
+        <span>9:41</span>
+        <span class="right">●●●●  100%</span>
+      </div>
+      <div class="rain" aria-hidden="true" id="rain"></div>
+      <div class="player">
+        <div class="stage">
+          <div class="dial">
+            <div class="dial-row far"><span class="name">Thunder</span></div>
+            <div class="dial-row"><span class="name">Rain</span></div>
+            <div class="dial-row head">
+              <span class="name">Creaking Boat</span>
+            </div>
+            <div class="dial-row"><span class="name">Seashore</span></div>
+            <div class="dial-row far"><span class="name">Stream</span></div>
+            <div class="head-ticks"><span></span><span></span></div>
+          </div>
+          <div class="transport">
+            <!-- Play triangle -->
+            <svg viewBox="0 0 24 24" stroke="#0D0F14" stroke-width="1.75" fill="#0D0F14">
+              <polygon points="9,6 9,18 19,12" />
+            </svg>
+          </div>
+          <div class="status-line">Paused</div>
+        </div>
+        <div class="dock">
+          <div class="dock-bar">
+            <svg viewBox="0 0 24 24"><path d="M12 6v6l4 2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9"/></svg>
+            <span>Session</span>
+            <svg viewBox="0 0 24 24"><path d="M6 15l6-6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+      </div>
+      <div class="home-indicator"></div>
+    </div>
+    <script>
+      const rain = document.getElementById('rain');
+      for (let i = 0; i < 46; i++) {
+        const d = document.createElement('div');
+        d.className = 'drop';
+        d.style.left = Math.random() * 100 + '%';
+        d.style.top = Math.random() * 100 + '%';
+        d.style.height = 20 + Math.random() * 56 + 'px';
+        d.style.opacity = 0.12 + Math.random() * 0.4;
+        rain.appendChild(d);
+      }
+    </script>
+  </body>
+</html>

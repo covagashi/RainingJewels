@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Playing — Raining Jewels</title>
+    <link rel="stylesheet" href="shared.css" />
+  </head>
+  <body>
+    <div class="phone playing">
+      <div class="status-bar">
+        <span>9:41</span>
+        <span class="right">●●●●  100%</span>
+      </div>
+      <div class="rain playing" aria-hidden="true" id="rain"></div>
+      <div class="player playing">
+        <div class="stage">
+          <div class="dial">
+            <div class="dial-row far"><span class="name">Soft Wind</span></div>
+            <div class="dial-row"><span class="name">Palm Wind</span></div>
+            <div class="dial-row head playing">
+              <span class="name">Wind Chimes</span>
+            </div>
+            <div class="dial-row"><span class="name">Birds</span></div>
+            <div class="dial-row far"><span class="name">Village Morning</span></div>
+            <div class="head-ticks"><span></span><span></span></div>
+          </div>
+          <div class="transport">
+            <!-- Pause -->
+            <svg viewBox="0 0 24 24" stroke="#9CC2D4" stroke-width="1.75" fill="none" stroke-linecap="round">
+              <line x1="9" y1="7" x2="9" y2="17" />
+              <line x1="15" y1="7" x2="15" y2="17" />
+            </svg>
+          </div>
+          <div class="status-line">Playing</div>
+        </div>
+        <div class="dock">
+          <div class="dock-bar">
+            <svg viewBox="0 0 24 24"><path d="M12 6v6l4 2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9"/></svg>
+            <span>Session</span>
+            <svg viewBox="0 0 24 24"><path d="M6 15l6-6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+      </div>
+      <div class="home-indicator"></div>
+    </div>
+    <script>
+      const rain = document.getElementById('rain');
+      for (let i = 0; i < 52; i++) {
+        const d = document.createElement('div');
+        d.className = 'drop';
+        d.style.left = Math.random() * 100 + '%';
+        d.style.top = Math.random() * 100 + '%';
+        d.style.height = 28 + Math.random() * 64 + 'px';
+        d.style.opacity = 0.18 + Math.random() * 0.5;
+        rain.appendChild(d);
+      }
+    </script>
+  </body>
+</html>

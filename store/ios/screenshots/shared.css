@@ -1,0 +1,429 @@
+/* Raining Jewels — App Store screenshot mockups
+ * Matches src/theme.ts and product UI (Welcome + Dial player). */
+
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;500;600;700&display=swap');
+
+:root {
+  --bg-top: #0d0f14;
+  --bg-bottom: #060709;
+  --bg-sheet: #14171e;
+  --accent: #9cc2d4;
+  --accent-soft: rgba(156, 194, 212, 0.32);
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --text-tertiary: rgba(255, 255, 255, 0.55);
+  --dial-neighbour: rgba(255, 255, 255, 0.34);
+  --glass-border: rgba(255, 255, 255, 0.35);
+  --glass-fill: rgba(255, 255, 255, 0.1);
+  --selected-border: rgba(255, 255, 255, 0.7);
+  --selected-fill: rgba(255, 255, 255, 0.26);
+  --divider: rgba(255, 255, 255, 0.18);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  width: 1290px;
+  height: 2796px;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background: var(--bg-top);
+  color: var(--text-primary);
+}
+
+.phone {
+  width: 1290px;
+  height: 2796px;
+  position: relative;
+  background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+  overflow: hidden;
+}
+
+/* Status bar (decorative) */
+.status-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 88px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 56px 14px;
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  z-index: 50;
+  color: var(--text-primary);
+}
+.status-bar .right {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-size: 24px;
+  opacity: 0.95;
+}
+
+/* Home indicator */
+.home-indicator {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 240px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.28);
+  z-index: 50;
+}
+
+/* Rain drops */
+.rain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.55;
+}
+.rain.playing {
+  opacity: 0.9;
+}
+.drop {
+  position: absolute;
+  width: 2px;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.55) 40%,
+    transparent 100%
+  );
+  border-radius: 2px;
+}
+
+/* ---------- Welcome ---------- */
+.welcome {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 72px;
+  text-align: center;
+}
+.welcome .picto {
+  width: 620px;
+  height: 620px;
+  object-fit: contain;
+  margin-bottom: 16px;
+}
+.welcome .title {
+  font-family: 'Manrope', sans-serif;
+  font-size: 68px;
+  line-height: 1.15;
+  letter-spacing: -0.6px;
+}
+.welcome .title .light {
+  font-weight: 300;
+}
+.welcome .title .bold {
+  font-weight: 700;
+}
+.welcome .subtitle {
+  margin-top: 18px;
+  font-size: 28px;
+  color: var(--text-tertiary);
+  line-height: 1.4;
+}
+.welcome .cta {
+  margin-top: 64px;
+  min-height: 96px;
+  padding: 0 80px;
+  border: 3px solid #fff;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 500;
+  font-size: 40px;
+}
+
+/* ---------- Player ---------- */
+.player {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 140px 0 120px;
+}
+.stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+}
+.dial {
+  width: 100%;
+  height: 920px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 80px;
+}
+.dial-row {
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  position: relative;
+}
+.dial-row .name {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 300;
+  font-size: 52px;
+  color: var(--dial-neighbour);
+  letter-spacing: -0.4px;
+  line-height: 1.1;
+}
+.dial-row.head .name {
+  font-size: 68px;
+  color: var(--text-primary);
+  font-weight: 300;
+}
+.dial-row.head.playing .name {
+  color: var(--accent);
+}
+.dial-row.far .name {
+  opacity: 0.45;
+  font-size: 44px;
+}
+.dial-row .icon {
+  width: 36px;
+  height: 36px;
+  opacity: 0.35;
+  stroke: #fff;
+  fill: none;
+  stroke-width: 1.75;
+}
+.dial-row.head .icon {
+  opacity: 0.9;
+}
+.dial-row.head.playing .icon {
+  stroke: var(--accent);
+  opacity: 1;
+}
+.head-ticks {
+  position: absolute;
+  left: 48px;
+  right: 48px;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 120px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: none;
+}
+.head-ticks span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.55);
+}
+.player.playing .head-ticks span {
+  background: var(--accent);
+}
+
+.transport {
+  margin-top: 48px;
+  width: 152px;
+  height: 152px;
+  border-radius: 999px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.35);
+}
+.player.playing .transport {
+  background: var(--accent-soft);
+  border: 2px solid rgba(156, 194, 212, 0.45);
+  box-shadow: none;
+}
+.transport svg {
+  width: 48px;
+  height: 48px;
+}
+.status-line {
+  margin-top: 28px;
+  font-size: 28px;
+  color: var(--text-tertiary);
+  letter-spacing: 0.2px;
+}
+.player.playing .status-line {
+  color: var(--accent);
+}
+
+/* Dock */
+.dock {
+  position: absolute;
+  left: 40px;
+  right: 40px;
+  bottom: 64px;
+  z-index: 10;
+}
+.dock-bar {
+  height: 96px;
+  border-radius: 999px;
+  background: var(--bg-sheet);
+  border: 1.5px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: var(--text-secondary);
+  font-size: 28px;
+}
+.dock-bar svg {
+  width: 32px;
+  height: 32px;
+  stroke: var(--text-secondary);
+  fill: none;
+  stroke-width: 1.75;
+}
+
+/* Panel open */
+.panel {
+  position: absolute;
+  left: 40px;
+  right: 40px;
+  bottom: 180px;
+  background: var(--bg-sheet);
+  border-radius: 56px;
+  padding: 48px 40px 40px;
+  border: 1.5px solid var(--divider);
+  z-index: 9;
+}
+.panel .label-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--text-secondary);
+  font-size: 28px;
+  margin-bottom: 28px;
+}
+.panel .label-row svg {
+  width: 28px;
+  height: 28px;
+  stroke: var(--text-secondary);
+  fill: none;
+  stroke-width: 1.75;
+}
+.chips {
+  display: flex;
+  gap: 16px;
+}
+.chip {
+  flex: 1;
+  min-height: 96px;
+  border-radius: 999px;
+  background: var(--glass-fill);
+  border: 2px solid var(--glass-border);
+  color: var(--text-secondary);
+  font-size: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.chip.selected {
+  background: var(--selected-fill);
+  border-color: var(--selected-border);
+  color: var(--text-primary);
+}
+.volume-row {
+  margin-top: 40px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  color: var(--text-secondary);
+}
+.volume-row svg {
+  width: 32px;
+  height: 32px;
+  stroke: var(--text-secondary);
+  fill: none;
+  stroke-width: 1.75;
+  flex-shrink: 0;
+}
+.slider-track {
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.15);
+  position: relative;
+}
+.slider-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 68%;
+  border-radius: 999px;
+  background: var(--accent);
+}
+.slider-thumb {
+  position: absolute;
+  left: 68%;
+  top: 50%;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #fff;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* Marketing caption overlay (optional framed shots) */
+.marketing {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 0 72px 220px;
+  background: linear-gradient(
+    180deg,
+    transparent 45%,
+    rgba(6, 7, 9, 0.55) 70%,
+    rgba(6, 7, 9, 0.92) 100%
+  );
+}
+.marketing h2 {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 600;
+  font-size: 64px;
+  line-height: 1.15;
+  letter-spacing: -0.5px;
+  margin-bottom: 16px;
+}
+.marketing p {
+  font-size: 32px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  max-width: 980px;
+}

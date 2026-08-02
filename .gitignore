@@ -49,3 +49,6 @@ yarn-error.*
 
 # Windows/Cygwin crash artifacts
 *.stackdump
+
+# App Store Connect API key (local only)
+.asc-credentials/
